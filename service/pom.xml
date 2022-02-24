@@ -29,9 +29,9 @@
 			<artifactId>commons-lang3</artifactId>
         </dependency>
         <dependency>
-            <groupId>eu.europa.ec.fisheries.uvms.plugins</groupId>
+            <groupId>fish.focus.uvms.plugins</groupId>
             <artifactId>ais-ra</artifactId>
-            <version>${ais.ra.version}</version>
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

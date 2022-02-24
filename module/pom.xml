@@ -26,7 +26,7 @@
                             <artifactId>ais-service</artifactId>
                         </ejbModule>
                         <rarModule>
-                            <groupId>eu.europa.ec.fisheries.uvms.plugins</groupId>
+                            <groupId>${project.groupId}</groupId>
                             <artifactId>ais-ra</artifactId>
                         </rarModule>
                     </modules>
@@ -49,9 +49,9 @@
             <type>ejb</type>
         </dependency>
         <dependency>
-            <groupId>eu.europa.ec.fisheries.uvms.plugins</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>ais-ra</artifactId>
-            <version>${ais.ra.version}</version>
+            <version>${project.version}</version>
             <type>rar</type>
         </dependency>
     </dependencies>

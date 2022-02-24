@@ -15,7 +15,6 @@
     <description>UVMS AIS plugin.</description>
     
     <properties>
-        <ais.ra.version>3.0.8</ais.ra.version>
         <exchange.model.version>5.3.23</exchange.model.version>
     </properties>
     
@@ -51,6 +50,7 @@
     </scm>
     
     <modules>
+        <module>ra</module>
         <module>service</module>
         <module>module</module>
     </modules>

@@ -40,8 +40,8 @@ import org.eclipse.microprofile.metrics.annotation.Gauge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import fish.focus.schema.exchange.movement.v1.MovementBaseType;
-import eu.europa.ec.fisheries.uvms.ais.AISConnection;
-import eu.europa.ec.fisheries.uvms.ais.AISConnectionFactoryImpl;
+import fish.focus.uvms.ais.AISConnection;
+import fish.focus.uvms.ais.AISConnectionFactoryImpl;
 import fish.focus.uvms.plugins.ais.StartupBean;
 
 @Singleton
