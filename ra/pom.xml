@@ -3,7 +3,7 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <parent>
-        <groupId>fish.focus.uvms.plugins.ais</groupId>
+        <groupId>fish.focus.uvms.plugins</groupId>
         <artifactId>ais</artifactId>
         <relativePath />
         <version>3.1.11-SNAPSHOT</version>

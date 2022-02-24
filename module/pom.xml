@@ -7,7 +7,7 @@
     <packaging>ear</packaging>
 
     <parent>
-        <groupId>fish.focus.uvms.plugins.ais</groupId>
+        <groupId>fish.focus.uvms.plugins</groupId>
         <artifactId>ais</artifactId>
         <version>3.1.11-SNAPSHOT</version>
     </parent>
