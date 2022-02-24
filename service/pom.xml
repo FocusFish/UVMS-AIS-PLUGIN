@@ -7,7 +7,7 @@
     <packaging>ejb</packaging>
 
     <parent>
-        <groupId>fish.focus.uvms.plugins</groupId>
+        <groupId>fish.focus.uvms.plugins.ais</groupId>
         <artifactId>ais</artifactId>
         <version>3.1.11-SNAPSHOT</version>
     </parent>
