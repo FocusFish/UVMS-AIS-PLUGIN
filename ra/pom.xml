@@ -15,6 +15,8 @@
 
     <properties>
         <version.org.jboss.ironjacamar>1.2.7.Final</version.org.jboss.ironjacamar>
+        <repo.url>${distributionManagement.repository.url}</repo.url>
+        <repo.id>${distributionManagement.repository.id}</repo.id>
     </properties>
 
     <dependencies>
@@ -25,6 +27,16 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>snapshot</id>
+            <properties>
+                <repo.url>${distributionManagement.snapshotRepository.url}</repo.url>
+                <repo.id>${distributionManagement.snapshotRepository.id}</repo.id>
+            </properties>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>
@@ -64,6 +76,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
                 <executions>
                     <execution>
                         <id>install-rar</id>
@@ -77,6 +92,8 @@
                             <artifactId>${project.artifactId}</artifactId>
                             <packaging>rar</packaging>
                             <version>${project.version}</version>
+                            <repositoryId>${repo.id}</repositoryId>
+                            <url>${repo.url}</url>
                         </configuration>
                     </execution>
                 </executions>
