@@ -32,7 +32,7 @@
   <transaction-support>NoTransaction</transaction-support>
   
   <connection-definitions>
-    <connection-definition class-name="eu.europa.ec.fisheries.uvms.ais.AISManagedConnectionFactory" jndi-name="java:/eis/AISConnectionFactory" pool-name="AISConnectionFactory">
+    <connection-definition class-name="fish.focus.uvms.ais.AISManagedConnectionFactory" jndi-name="java:/eis/AISConnectionFactory" pool-name="AISConnectionFactory">
     </connection-definition>
   </connection-definitions>
 

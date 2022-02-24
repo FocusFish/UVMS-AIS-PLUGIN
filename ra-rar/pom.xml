@@ -10,19 +10,14 @@
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>ais-ra</artifactId>
-    <packaging>jar</packaging>
-
-    <properties>
-        <version.org.jboss.ironjacamar>1.2.7.Final</version.org.jboss.ironjacamar>
-    </properties>
+    <artifactId>ais-ra-rar</artifactId>
+    <packaging>rar</packaging>
 
     <dependencies>
         <dependency>
-            <groupId>org.jboss.ironjacamar</groupId>
-            <artifactId>ironjacamar-spec-api</artifactId>
-            <version>${version.org.jboss.ironjacamar}</version>
-            <scope>provided</scope>
+            <groupId>fish.focus.uvms.plugins</groupId>
+            <artifactId>ais-ra</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>

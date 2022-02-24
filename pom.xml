@@ -39,11 +39,6 @@
             <version>3.16</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>fish.focus.uvms.exchange</groupId>
-            <artifactId>exchange-model</artifactId>
-            <version>${exchange.model.version}</version>
-        </dependency>
     </dependencies>
 
     <scm>
@@ -53,6 +48,7 @@
 
     <modules>
         <module>ra</module>
+        <module>ra-rar</module>
         <module>service</module>
         <module>module</module>
     </modules>

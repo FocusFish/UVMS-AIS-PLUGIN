@@ -27,7 +27,7 @@
                         </ejbModule>
                         <rarModule>
                             <groupId>${project.groupId}</groupId>
-                            <artifactId>ais-ra</artifactId>
+                            <artifactId>ais-ra-rar</artifactId>
                         </rarModule>
                     </modules>
                     <skinnyWars>true</skinnyWars>
@@ -50,7 +50,7 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>ais-ra</artifactId>
+            <artifactId>ais-ra-rar</artifactId>
             <version>${project.version}</version>
             <type>rar</type>
         </dependency>
