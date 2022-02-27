@@ -29,7 +29,7 @@
 			<artifactId>commons-lang3</artifactId>
         </dependency>
         <dependency>
-            <groupId>fish.focus.uvms.plugins</groupId>
+            <groupId>fish.focus.uvms.plugins.ais</groupId>
             <artifactId>ais-ra</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
