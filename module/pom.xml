@@ -7,9 +7,9 @@
     <packaging>ear</packaging>
 
     <parent>
-        <groupId>eu.europa.ec.fisheries.uvms.plugins</groupId>
+        <groupId>fish.focus.uvms.plugins.ais</groupId>
         <artifactId>ais</artifactId>
-        <version>3.1.11-SNAPSHOT</version>
+        <version>3.1.11</version>
     </parent>
 
     <build>
@@ -27,7 +27,7 @@
                         </ejbModule>
                         <rarModule>
                             <groupId>${project.groupId}</groupId>
-                            <artifactId>ais-ra</artifactId>
+                            <artifactId>ais-ra-rar</artifactId>
                         </rarModule>
                     </modules>
                     <skinnyWars>true</skinnyWars>
@@ -50,8 +50,8 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>ais-ra</artifactId>
-            <version>${ais.ra.version}</version>
+            <artifactId>ais-ra-rar</artifactId>
+            <version>${project.version}</version>
             <type>rar</type>
         </dependency>
     </dependencies>

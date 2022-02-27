@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
     <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>fish.focus.uvms.plugins.ais</groupId>
+        <artifactId>ais</artifactId>
+        <version>3.1.11</version>
+    </parent>
+
     <artifactId>ais-service</artifactId>
     <name>${project.parent.artifactId}-service</name>
     <packaging>ejb</packaging>
 
-    <parent>
-        <groupId>eu.europa.ec.fisheries.uvms.plugins</groupId>
-        <artifactId>ais</artifactId>
-        <version>3.1.11-SNAPSHOT</version>
-    </parent>
-
     <properties>
-        <asset.client.version>6.0.27</asset.client.version>
         <application.name>${project.parent.artifactId}</application.name>
         <application.responseTopicName>PLUGIN_RESPONSE</application.responseTopicName>
         <application.groupid>${project.parent.groupId}</application.groupid> 
@@ -21,7 +20,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>eu.europa.ec.fisheries.uvms.exchange</groupId>
+            <groupId>fish.focus.uvms.exchange</groupId>
             <artifactId>exchange-model</artifactId>
             <version>${exchange.model.version}</version>
         </dependency>
@@ -30,9 +29,9 @@
 			<artifactId>commons-lang3</artifactId>
         </dependency>
         <dependency>
-            <groupId>eu.europa.ec.fisheries.uvms.plugins</groupId>
+            <groupId>fish.focus.uvms.plugins.ais</groupId>
             <artifactId>ais-ra</artifactId>
-            <version>${ais.ra.version}</version>
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
