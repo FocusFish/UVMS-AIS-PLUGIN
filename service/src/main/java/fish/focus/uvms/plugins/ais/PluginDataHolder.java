@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public abstract class PluginDataHolder {
 
-    public static final String PLUGIN_PROPERTIES = "ais.properties";
+    public static final String PLUGIN_PROPERTIES = "plugin.properties";
     public static final String PROPERTIES = "settings.properties";
     public static final String CAPABILITIES_PROPERTIES = "capabilities.properties";
 
