@@ -5,7 +5,6 @@
     <parent>
         <groupId>fish.focus.uvms.plugins.ais</groupId>
         <artifactId>ais</artifactId>
-        <relativePath />
         <version>3.1.11-SNAPSHOT</version>
     </parent>
 
