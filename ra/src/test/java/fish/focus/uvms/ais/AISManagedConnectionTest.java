@@ -37,8 +37,7 @@ public class AISManagedConnectionTest {
         AISManagedConnection aisManagedConnection = new AISManagedConnection(null);
         aisManagedConnection.getSentences();
         BufferedReader bufferMock = mock(BufferedReader.class);
-        when(bufferMock.readLine()).thenReturn("\\1G1:32,s:516,c:1652227200*5B\\!ABVDM,1,1,0,B," + payload + ",0*7D",
-                null);
+        when(bufferMock.readLine()).thenReturn("\\1G1:32,s:516,c:1652227200*5B\\!ABVDM,1,1,0,B," + payload + ",0*7D", null);
         aisManagedConnection.read(bufferMock);
         List<Sentence> sentences = aisManagedConnection.getSentences();
         assertThat(sentences.size(), is(1));
@@ -85,7 +84,7 @@ public class AISManagedConnectionTest {
     }
 
     @Test
-    public void commentBlockMultiPartTwoSentecesTest() throws IOException {
+    public void commentBlockMultiPartTwoSentencesTest() throws IOException {
         String payload = UUID.randomUUID().toString();
         String payload2 = UUID.randomUUID().toString();
         String payload3 = UUID.randomUUID().toString();
