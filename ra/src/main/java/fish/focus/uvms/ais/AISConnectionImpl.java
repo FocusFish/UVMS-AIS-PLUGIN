@@ -89,7 +89,7 @@ public class AISConnectionImpl implements AISConnection
    }
 
    @Override
-   public List<String> getSentences() {
+   public List<Sentence> getSentences() {
       if (mc != null) {
          return mc.getSentences();
       }

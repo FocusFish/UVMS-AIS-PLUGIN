@@ -17,9 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
@@ -42,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import fish.focus.schema.exchange.movement.v1.MovementBaseType;
 import fish.focus.uvms.ais.AISConnection;
 import fish.focus.uvms.ais.AISConnectionFactoryImpl;
+import fish.focus.uvms.ais.Sentence;
 import fish.focus.uvms.plugins.ais.StartupBean;
 
 @Singleton
@@ -139,7 +138,7 @@ public class AisService {
                     processIterator.remove();
                 }
             }
-            List<String> sentences = connection.getSentences();
+            List<Sentence> sentences = connection.getSentences();
             CompletableFuture<Void> process = CompletableFuture.supplyAsync(() -> processService.processMessages(sentences, knownFishingVessels), executorService)
                     .thenAccept(result -> {
                         downsamplingService.getDownSampledMovements().putAll(result.getDownsampledMovements());

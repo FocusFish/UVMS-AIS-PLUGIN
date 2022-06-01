@@ -39,6 +39,8 @@ import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.resource.NotSupportedException;
 import javax.resource.ResourceException;
@@ -89,7 +91,7 @@ public class AISManagedConnection implements ManagedConnection {
      */
     private Set<AISConnectionImpl> connections;
 
-    private ConcurrentLinkedQueue<String> sentences;
+    private ConcurrentLinkedQueue<Sentence> sentences;
 
     private boolean open = false;
     private boolean continueRetry = true;
@@ -285,12 +287,12 @@ public class AISManagedConnection implements ManagedConnection {
         return open;
     }
 
-    public List<String> getSentences() {
+    public List<Sentence> getSentences() {
         if (sentences == null) {
             sentences = new ConcurrentLinkedQueue<>();
         }
 
-        ArrayList<String> returnList = new ArrayList<>();
+        ArrayList<Sentence> returnList = new ArrayList<>();
         returnList.addAll(sentences);
         sentences.clear();
 
@@ -323,7 +325,7 @@ public class AISManagedConnection implements ManagedConnection {
                             if (socket.isConnected()) {
                                 socket.close();
                             }
-                            Thread.sleep(RETRY_DELAY_TIME_SEC * 1000);
+                            Thread.sleep(RETRY_DELAY_TIME_SEC * 1000L);
                         } catch (Exception e) {
                             log.info("//NOP: {}" + e.getLocalizedMessage());
                             log.info("Exception:" + e);
@@ -357,10 +359,18 @@ public class AISManagedConnection implements ManagedConnection {
     void read(BufferedReader commandInput) throws IOException {
         String input;
         String tmp = "";
+        String commentBlock = null;
+        Pattern pattern = Pattern.compile("\\\\(.*?)\\\\(.*)");
         // Infinite read until read is EOF
         while ((input = commandInput.readLine()) != null) {
-
             try {
+                Matcher matcher = pattern.matcher(input);
+                if (matcher.matches()) {
+                    if (commentBlock == null) {
+                        commentBlock = matcher.group(1);
+                    }
+                    input = matcher.group(2);
+                }
                 // Split the incoming line
                 String[] arr = input.split(",");
                 if (arr != null && arr.length > 4 && !"$ABVSI".equals(arr[0])) {
@@ -368,12 +378,14 @@ public class AISManagedConnection implements ManagedConnection {
                         tmp += arr[5];
                         // If this part is the last sentence part, cache it
                         if (Integer.parseInt(arr[1]) == Integer.parseInt(arr[2])) {
-                            sentences.add(tmp);
+                            sentences.add(new Sentence(commentBlock, tmp));
                             tmp = "";
+                            commentBlock = null;
                         }
                     } else {
                         // This is a single sentence message, cache it
-                        sentences.add(arr[5]);
+                        sentences.add(new Sentence(commentBlock, arr[5]));
+                        commentBlock = null;
                     }
                 }
             } catch (Exception e) {
