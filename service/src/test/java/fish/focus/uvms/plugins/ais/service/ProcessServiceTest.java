@@ -69,7 +69,7 @@ public class ProcessServiceTest {
     @Test
     public void aisType1WithCommentBlockTest() {
         Sentence aisType1MessageWithCommentBlock = new Sentence("1G1:32,s:516,c:1652227200*5B", getAisType1Message().getSentence());
-		ProcessResult result = processService.processMessages(Arrays.asList(aisType1MessageWithCommentBlock), new HashSet<>());
+        ProcessResult result = processService.processMessages(Arrays.asList(aisType1MessageWithCommentBlock), new HashSet<>());
         Map<String, MovementBaseType> movements = result.getDownsampledMovements();
         MovementBaseType movement = movements.get("371798000");
         assertThat(movement.getMmsi(), is("371798000"));
@@ -78,9 +78,9 @@ public class ProcessServiceTest {
         assertThat(movement.getPosition().getLongitude(), is(-123.39538333333333));
         assertThat(movement.getTrueHeading(), is(215));
         assertThat(movement.getReportedSpeed(), is(12.3));
-        assertThat(movement.getAisPositionAccuracy(), is((short)1));
-		ZonedDateTime timestamp = movement.getPositionTime().toInstant().atZone(ZoneOffset.UTC);
-		int positionSecond = timestamp.getSecond();
+        assertThat(movement.getAisPositionAccuracy(), is((short) 1));
+        ZonedDateTime timestamp = movement.getPositionTime().toInstant().atZone(ZoneOffset.UTC);
+        int positionSecond = timestamp.getSecond();
         assertThat(positionSecond, is(33));
         assertThat(timestamp, is(Instant.ofEpochSecond(1652227200).minus(1, ChronoUnit.MINUTES).atZone(ZoneOffset.UTC).withSecond(33)));
     }
@@ -150,12 +150,11 @@ public class ProcessServiceTest {
         assertThat(movement.getFlagState(), is("USA"));
         assertThat(movement.getPosition().getLatitude(), is(40.68454));
         assertThat(movement.getPosition().getLongitude(), is(-74.07213166666666666666666667));
-        assertThat(movement.getAisPositionAccuracy(), is((short)0));
+        assertThat(movement.getAisPositionAccuracy(), is((short) 0));
         ZonedDateTime timestamp = movement.getPositionTime().toInstant().atZone(ZoneOffset.UTC);
-		int positionSecond = timestamp.getSecond();
+        int positionSecond = timestamp.getSecond();
         assertThat(positionSecond, is(49));
         assertThat(timestamp, is(Instant.ofEpochSecond(1653900489).minus(1, ChronoUnit.MINUTES).atZone(ZoneOffset.UTC).withSecond(49)));
-
     }
 
     @Test
