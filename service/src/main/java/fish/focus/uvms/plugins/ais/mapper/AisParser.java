@@ -11,9 +11,11 @@ copy of the GNU General Public License along with the IFDM Suite. If not, see <h
  */
 package fish.focus.uvms.plugins.ais.mapper;
 
-import java.util.Calendar;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.TimeZone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import fish.focus.schema.exchange.module.v1.ExchangeModuleMethod;
@@ -87,14 +89,14 @@ public class AisParser {
         }
     }
     
-    public static MovementBaseType parsePositionReport(String binary, AisType aisType) {
+    public static MovementBaseType parsePositionReport(String binary, AisType aisType, Instant lesTimestamp) {
         switch (aisType) {
             case TYPE1:
             case TYPE2:
             case TYPE3:
-                return parseReportType123(binary);
+                return parseReportType123(binary, lesTimestamp);
             case TYPE18:
-                return parseReportType18(binary);
+                return parseReportType18(binary, lesTimestamp);
             default:
                 return null;
         }
@@ -111,7 +113,7 @@ public class AisParser {
         }
     }
     
-    public static MovementBaseType parseReportType123(String binary) {
+    public static MovementBaseType parseReportType123(String binary, Instant lesTimestamp) {
         MovementBaseType movement = new MovementBaseType();
         Integer messageType = Integer.parseInt(binary.substring(0, 6), 2);
         movement.setStatus(messageType.toString());
@@ -140,7 +142,10 @@ public class AisParser {
         String trueHeadingStr = binary.substring(128, 137);
         Integer trueHeading = parseToNumeric("TrueHeading", trueHeadingStr);
         movement.setTrueHeading(trueHeading);
-        movement.setPositionTime(getTimestamp(Integer.parseInt(binary.substring(137, 143), 2)));
+        movement.setPositionTime(getTimestamp(Integer.parseInt(binary.substring(137, 143), 2), lesTimestamp));
+        if (lesTimestamp != null) {
+            movement.setLesReportTime(Date.from(lesTimestamp));
+        }
         movement.setSource(MovementSourceType.AIS);
         movement.setFlagState(ansi3);
         return movement;
@@ -176,7 +181,7 @@ public class AisParser {
         return assetDTO;
     }
     
-    public static MovementBaseType parseReportType18(String binary) {
+    public static MovementBaseType parseReportType18(String binary, Instant lesTimestamp) {
 
         if (binary == null || binary.trim().length() < 1) {
             return null;
@@ -220,7 +225,10 @@ public class AisParser {
         String ansi3 = getAnsi3FromMMSI(mmsi);
 
         // timestamp
-        movement.setPositionTime(getTimestamp(Integer.parseInt(binary.substring(133, 139), 2)));
+        movement.setPositionTime(getTimestamp(Integer.parseInt(binary.substring(133, 139), 2), lesTimestamp));
+        if (lesTimestamp != null) {
+            movement.setLesReportTime(Date.from(lesTimestamp));
+        }
         movement.setSource(MovementSourceType.AIS);
         movement.setFlagState(ansi3);
         return movement;
@@ -322,16 +330,18 @@ public class AisParser {
         return point;
     }
 
-    private static Date getTimestamp(Integer utcSeconds) {
-        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-        cal.set(Calendar.MILLISECOND, 0);
-        if (utcSeconds != null && utcSeconds >= 0 && utcSeconds < 60) {
-            if (utcSeconds >= cal.get(Calendar.SECOND)) {
-                cal.add(Calendar.MINUTE, -1);
-            }
-            cal.set(Calendar.SECOND, utcSeconds);
+    private static Date getTimestamp(Integer utcSeconds, Instant lesTimestamp) {
+        ZonedDateTime now = Instant.now().truncatedTo(ChronoUnit.SECONDS).atZone(ZoneId.of("UTC"));
+        if (lesTimestamp != null) {
+            now = lesTimestamp.atZone(ZoneId.of("UTC"));
         }
-        return cal.getTime();
+        if (utcSeconds != null && utcSeconds >= 0 && utcSeconds < 60) {
+            if (utcSeconds > now.getSecond()) {
+                now = now.minusMinutes(1);
+            }
+            now = now.withSecond(utcSeconds);
+        }
+        return Date.from(now.toInstant());
     }
 
     private static Integer parseToNumeric(String fieldName, String str) {
