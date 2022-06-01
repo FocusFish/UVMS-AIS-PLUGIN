@@ -6,18 +6,18 @@
     <parent>
         <groupId>fish.focus.uvms.maven</groupId>
         <artifactId>uvms-pom</artifactId>
-        <version>3.16</version>
+        <version>3.18</version>
         <relativePath />
     </parent>
 
     <groupId>fish.focus.uvms.plugins.ais</groupId>
     <artifactId>ais</artifactId>
-    <version>3.1.13</version>
+    <version>3.1.14</version>
     <packaging>pom</packaging>
     <description>UVMS AIS plugin.</description>
 
     <properties>
-        <exchange.model.version>5.3.23</exchange.model.version>
+        <exchange.model.version>5.3.27</exchange.model.version>
     </properties>
 
     <dependencies>
@@ -36,7 +36,7 @@
             <groupId>fish.focus.uvms.maven</groupId>
             <artifactId>uvms-pom-java11-deps</artifactId>
             <type>pom</type>
-            <version>3.16</version>
+            <version>3.18</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

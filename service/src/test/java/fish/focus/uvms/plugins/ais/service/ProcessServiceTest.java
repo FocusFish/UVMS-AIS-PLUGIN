@@ -2,7 +2,11 @@ package fish.focus.uvms.plugins.ais.service;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+
+import java.time.Instant;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import fish.focus.schema.exchange.movement.v1.MovementBaseType;
+import fish.focus.uvms.ais.Sentence;
 import fish.focus.uvms.asset.client.model.AssetDTO;
 import fish.focus.uvms.plugins.ais.StartupBean;
 import fish.focus.uvms.plugins.ais.service.DownsamplingService;
@@ -60,7 +65,26 @@ public class ProcessServiceTest {
         int positionSecond = movement.getPositionTime().toInstant().atZone(ZoneOffset.UTC).getSecond();
         assertThat(positionSecond, is(33));
     }
-    
+
+    @Test
+    public void aisType1WithCommentBlockTest() {
+        Sentence aisType1MessageWithCommentBlock = new Sentence("1G1:32,s:516,c:1652227200*5B", getAisType1Message().getSentence());
+        ProcessResult result = processService.processMessages(Arrays.asList(aisType1MessageWithCommentBlock), new HashSet<>());
+        Map<String, MovementBaseType> movements = result.getDownsampledMovements();
+        MovementBaseType movement = movements.get("371798000");
+        assertThat(movement.getMmsi(), is("371798000"));
+        assertThat(movement.getFlagState(), is("PAN"));
+        assertThat(movement.getPosition().getLatitude(), is(48.38163333333333));
+        assertThat(movement.getPosition().getLongitude(), is(-123.39538333333333));
+        assertThat(movement.getTrueHeading(), is(215));
+        assertThat(movement.getReportedSpeed(), is(12.3));
+        assertThat(movement.getAisPositionAccuracy(), is((short) 1));
+        ZonedDateTime timestamp = movement.getPositionTime().toInstant().atZone(ZoneOffset.UTC);
+        int positionSecond = timestamp.getSecond();
+        assertThat(positionSecond, is(33));
+        assertThat(timestamp, is(Instant.ofEpochSecond(1652227200).minus(1, ChronoUnit.MINUTES).atZone(ZoneOffset.UTC).withSecond(33)));
+    }
+
     @Test
     public void aisType2Test() {
         ProcessResult result = processService.processMessages(Arrays.asList(getAisType2Message()), new HashSet<>());
@@ -115,7 +139,24 @@ public class ProcessServiceTest {
         assertThat(movement.getPosition().getLongitude(), is(-74.07213166666666666666666667));
         assertThat(movement.getAisPositionAccuracy(), is((short)0));
     }
-    
+
+    @Test
+    public void positionType18WithCommentBlockTest() {
+        Sentence aisType1MessageWithCommentBlock = new Sentence("1G2:353911,s:Goteborg,c:1653900489*4E", getAisType18Message().getSentence());
+        ProcessResult result = processService.processMessages(Arrays.asList(aisType1MessageWithCommentBlock), new HashSet<>());
+        Map<String, MovementBaseType> movements = result.getDownsampledMovements();
+        MovementBaseType movement = movements.get("338087471");
+        assertThat(movement.getMmsi(), is("338087471"));
+        assertThat(movement.getFlagState(), is("USA"));
+        assertThat(movement.getPosition().getLatitude(), is(40.68454));
+        assertThat(movement.getPosition().getLongitude(), is(-74.07213166666666666666666667));
+        assertThat(movement.getAisPositionAccuracy(), is((short) 0));
+        ZonedDateTime timestamp = movement.getPositionTime().toInstant().atZone(ZoneOffset.UTC);
+        int positionSecond = timestamp.getSecond();
+        assertThat(positionSecond, is(49));
+        assertThat(timestamp, is(Instant.ofEpochSecond(1653900489).minus(1, ChronoUnit.MINUTES).atZone(ZoneOffset.UTC).withSecond(49)));
+    }
+
     @Test
     public void aisType5Test() {
         ProcessResult result = processService.processMessages(Arrays.asList(getAisType5Message()), new HashSet<>());
@@ -194,8 +235,8 @@ public class ProcessServiceTest {
     RAIM:               False
     state_syncstate:    0
      */
-    private String getAisType1Message() {
-        return "15RTgt0PAso;90TKcjM8h6g208CQ,0*4A";
+    private Sentence getAisType1Message() {
+        return new Sentence(null, "15RTgt0PAso;90TKcjM8h6g208CQ,0*4A");
     }
     
     /*
@@ -218,8 +259,8 @@ public class ProcessServiceTest {
     state_slottimeout:  3
     state_slotoffset:   6
      */
-    private String getAisType2Message() {
-        return "25Cjtd0Oj;Jp7ilG7=UkKBoB0<06";
+    private Sentence getAisType2Message() {
+        return new Sentence(null, "25Cjtd0Oj;Jp7ilG7=UkKBoB0<06");
     }
     
     /*
@@ -242,8 +283,8 @@ public class ProcessServiceTest {
     state_slottimeout:  0
     state_slotoffset:   0
      */
-    private String getAisType3Message() {
-        return "38Id705000rRVJhE7cl9n;160000";
+    private Sentence getAisType3Message() {
+        return new Sentence(null, "38Id705000rRVJhE7cl9n;160000");
     }
     /*
     MessageID:        5
@@ -268,8 +309,8 @@ public class ProcessServiceTest {
     dte:              0
     Spare:            0
      */
-    private String getAisType5Message() {
-        return "55?MbV02;H;s<HtKR20EHE:0@T4@Dn2222222216L961O5Gf0NSQEp6ClRp8";
+    private Sentence getAisType5Message() {
+        return new Sentence(null, "55?MbV02;H;s<HtKR20EHE:0@T4@Dn2222222216L961O5Gf0NSQEp6ClRp8");
     }
     
     /*
@@ -290,8 +331,8 @@ public class ProcessServiceTest {
     CommStateSelector:  1
     CommState:          393222
      */
-    private String getAisType18Message() {
-        return "B52K>;h00Fc>jpUlNV@ikwpUoP06,0*4C";
+    private Sentence getAisType18Message() {
+        return new Sentence(null, "B52K>;h00Fc>jpUlNV@ikwpUoP06,0*4C");
     }
     
     /*
@@ -301,8 +342,8 @@ public class ProcessServiceTest {
     partnum:           0
     name:              PROGUY 
      */
-    private String getAisType24PartAMessage() {
-        return "H42O55i18tMET00000000000000,2*6D";
+    private Sentence getAisType24PartAMessage() {
+        return new Sentence(null, "H42O55i18tMET00000000000000,2*6D");
     }
     
     /*
@@ -318,15 +359,15 @@ public class ProcessServiceTest {
     dimC:              0
     dimD:              5
      */
-    private String getAisType24PartBMessage() {
-        return "H42O55lti4hhhilD3nink000?050,0*40";
+    private Sentence getAisType24PartBMessage() {
+        return new Sentence(null, "H42O55lti4hhhilD3nink000?050,0*40");
     }
     
-    private String getAisType5FishingVessel() {
-        return "5CpuqR029m2U<pLP00084i@T<40000000000000N1HN814lf0<1i6CR@@PC52@ii6CR@@00";
+    private Sentence getAisType5FishingVessel() {
+        return new Sentence(null, "5CpuqR029m2U<pLP00084i@T<40000000000000N1HN814lf0<1i6CR@@PC52@ii6CR@@00");
     }
 
-    private String getAisPositionMessage() {
-        return "13@p;@P0020hrRFPqG5EQUHHP00,0*5C";
+    private Sentence getAisPositionMessage() {
+        return new Sentence(null, "13@p;@P0020hrRFPqG5EQUHHP00,0*5C");
     }
 }

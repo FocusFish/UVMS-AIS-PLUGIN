@@ -11,6 +11,7 @@ copy of the GNU General Public License along with the IFDM Suite. If not, see <h
  */
 package fish.focus.uvms.plugins.ais.service;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +22,7 @@ import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import fish.focus.schema.exchange.movement.v1.MovementBaseType;
+import fish.focus.uvms.ais.Sentence;
 import fish.focus.uvms.asset.client.model.AssetDTO;
 import fish.focus.uvms.plugins.ais.StartupBean;
 import fish.focus.uvms.plugins.ais.mapper.AisParser;
@@ -37,19 +39,23 @@ public class ProcessService {
     @Inject
     private ExchangeService exchangeService;
 
-    public ProcessResult processMessages(List<String> sentences, Set<String> knownFishingVessels) {
+    public ProcessResult processMessages(List<Sentence> sentences, Set<String> knownFishingVessels) {
         long start = System.currentTimeMillis();
 
         List<MovementBaseType> movements = new ArrayList<>();
         Map<String, MovementBaseType> downsampledMovements = new HashMap<>();
         Map<String, AssetDTO> downsampledAssets = new HashMap<>();
         // collect
-        for (String sentence : sentences) {
+        for (Sentence sentence : sentences) {
             try {
-                String binary = symbolToBinary(sentence);
+                String binary = symbolToBinary(sentence.getSentence());
                 AisType aisType = AisParser.parseAisType(binary);
+                Instant lesTimestamp = null;
+                if (sentence.hasValidCommentBlock()) {
+                    lesTimestamp = sentence.getCommentBlockLesTimestamp();
+                }
                 if (aisType.isPositionReport()) {
-                    MovementBaseType movement = AisParser.parsePositionReport(binary, aisType);
+                    MovementBaseType movement = AisParser.parsePositionReport(binary, aisType, lesTimestamp);
                     if (movement != null) {
                         if (knownFishingVessels.contains(movement.getMmsi())) {
                             movements.add(movement);
@@ -63,7 +69,7 @@ public class ProcessService {
                     addFishingVessels(asset, knownFishingVessels);
                 }
             } catch (Exception e) {
-                exchangeService.sendToErrorQueueParsingError(sentence);
+                exchangeService.sendToErrorQueueParsingError(sentence.getSentence());
                 LOG.error("Could not parse AIS message {}", sentence, e);
             }
         }

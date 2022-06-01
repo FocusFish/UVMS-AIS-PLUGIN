@@ -50,7 +50,7 @@ public interface AISConnection
 
    public void open(String host, Integer port, String userName, String password);
 
-   public List<String> getSentences();
+   public List<Sentence> getSentences();
 
    public long getQueueSize();
 
