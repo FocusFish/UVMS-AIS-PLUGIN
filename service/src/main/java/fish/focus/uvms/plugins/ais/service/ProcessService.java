@@ -42,6 +42,8 @@ public class ProcessService {
     public ProcessResult processMessages(List<Sentence> sentences, Set<String> knownFishingVessels) {
         long start = System.currentTimeMillis();
 
+        boolean onlyFishingVessels = "true".equalsIgnoreCase(startUp.getSetting("onlyFishingVessels"));
+
         List<MovementBaseType> movements = new ArrayList<>();
         Map<String, MovementBaseType> downsampledMovements = new HashMap<>();
         Map<String, AssetDTO> downsampledAssets = new HashMap<>();
@@ -60,13 +62,19 @@ public class ProcessService {
                         if (knownFishingVessels.contains(movement.getMmsi())) {
                             movements.add(movement);
                         } else {
-                            downsampledMovements.put(movement.getMmsi(), movement);
+                           if (!onlyFishingVessels) {
+                             downsampledMovements.put(movement.getMmsi(), movement);
+                           }
                         }
                     }
                 } else if (aisType.isStaticReport()) {
                     AssetDTO asset = AisParser.parseStaticReport(binary, aisType);
-                    downsampledAssets.put(asset.getMmsi(), asset);
-                    addFishingVessels(asset, knownFishingVessels);
+                    if (asset != null) {
+                        downsampledAssets.put(asset.getMmsi(), asset);
+	                    addFishingVessels(asset, knownFishingVessels);
+                    } else {
+			           LOG.error("Couldn't get asset from ais stacic report, ignoring it");
+					}
                 }
             } catch (Exception e) {
                 exchangeService.sendToErrorQueueParsingError(sentence.getSentence());
