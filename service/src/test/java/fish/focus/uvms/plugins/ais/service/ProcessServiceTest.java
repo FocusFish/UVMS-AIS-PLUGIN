@@ -1,7 +1,8 @@
 package fish.focus.uvms.plugins.ais.service;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -12,6 +13,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -49,7 +52,11 @@ public class ProcessServiceTest {
     
     @Captor
     private ArgumentCaptor<List<MovementBaseType>> captor;
-    
+
+    @Before
+    public void init(){
+        when(startUp.getSetting("onlyFishingVessels")).thenReturn("false");
+    }
     @Test
     public void aisType1Test() {
         ProcessResult result = processService.processMessages(Arrays.asList(getAisType1Message()), new HashSet<>());
@@ -79,6 +86,7 @@ public class ProcessServiceTest {
         assertThat(movement.getTrueHeading(), is(215));
         assertThat(movement.getReportedSpeed(), is(12.3));
         assertThat(movement.getAisPositionAccuracy(), is((short) 1));
+
         ZonedDateTime timestamp = movement.getPositionTime().toInstant().atZone(ZoneOffset.UTC);
         int positionSecond = timestamp.getSecond();
         assertThat(positionSecond, is(33));
@@ -127,7 +135,20 @@ public class ProcessServiceTest {
         assertThat(movement.getPosition().getLatitude(), is(57.490381666666664));
         assertThat(movement.getPosition().getLongitude(), is(10.685565));
     }
-    
+    @Test
+    public void onlyFishingVesselsTest() {
+        when(startUp.getSetting("onlyFishingVessels")).thenReturn("true");
+        ProcessResult result = processService.processMessages(Arrays.asList(getAisPositionMessage()), new HashSet<>());
+        Map<String, MovementBaseType> movements = result.getDownsampledMovements();
+        assertThat(movements.size(), is(0));
+    }
+    @Test
+    public void notOnlyFishingVesselsTest() {
+        when(startUp.getSetting("onlyFishingVessels")).thenReturn("false");
+        ProcessResult result = processService.processMessages(Arrays.asList(getAisPositionMessage()), new HashSet<>());
+        Map<String, MovementBaseType> movements = result.getDownsampledMovements();
+        assertThat(movements.size(), is(1));
+    }
     @Test
     public void positionType18Test() {
         ProcessResult result = processService.processMessages(Arrays.asList(getAisType18Message()), new HashSet<>());
@@ -159,6 +180,7 @@ public class ProcessServiceTest {
 
     @Test
     public void aisType5Test() {
+
         ProcessResult result = processService.processMessages(Arrays.asList(getAisType5Message()), new HashSet<>());
         Map<String, AssetDTO> assetMap = result.getDownsampledAssets();
         assertThat(assetMap.size(), is(1));
