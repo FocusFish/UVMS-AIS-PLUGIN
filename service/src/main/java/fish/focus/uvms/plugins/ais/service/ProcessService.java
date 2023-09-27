@@ -32,6 +32,7 @@ import fish.focus.uvms.plugins.ais.mapper.AisParser.AisType;
 public class ProcessService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProcessService.class);
+    private static final Logger LOG_AIS_NOT_FISHISING_VESSEL = LoggerFactory.getLogger("aisnofishingvessel");
 
     @Inject
     private StartupBean startUp;
@@ -58,12 +59,15 @@ public class ProcessService {
                 }
                 if (aisType.isPositionReport()) {
                     MovementBaseType movement = AisParser.parsePositionReport(binary, aisType, lesTimestamp);
+
                     if (movement != null) {
                         if (knownFishingVessels.contains(movement.getMmsi())) {
                             movements.add(movement);
                         } else {
-                           if (!onlyFishingVessels) {
+                           if (!onlyFishingVessels || knownFishingVessels.isEmpty() ) {
                              downsampledMovements.put(movement.getMmsi(), movement);
+                           } else {
+                             LOG_AIS_NOT_FISHISING_VESSEL.info("{}-{}", movement.getMmsi(), movement);
                            }
                         }
                     }

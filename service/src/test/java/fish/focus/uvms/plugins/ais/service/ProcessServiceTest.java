@@ -53,8 +53,10 @@ public class ProcessServiceTest {
     @Captor
     private ArgumentCaptor<List<MovementBaseType>> captor;
 
+
     @Before
     public void init(){
+        //onlyFishingVessels should be off for all test
         when(startUp.getSetting("onlyFishingVessels")).thenReturn("false");
     }
     @Test
@@ -135,20 +137,47 @@ public class ProcessServiceTest {
         assertThat(movement.getPosition().getLatitude(), is(57.490381666666664));
         assertThat(movement.getPosition().getLongitude(), is(10.685565));
     }
+	
     @Test
-    public void onlyFishingVesselsTest() {
+    public void onlyFishingVesselsWithNoFishingVesselTest() {
         when(startUp.getSetting("onlyFishingVessels")).thenReturn("true");
-        ProcessResult result = processService.processMessages(Arrays.asList(getAisPositionMessage()), new HashSet<>());
-        Map<String, MovementBaseType> movements = result.getDownsampledMovements();
-        assertThat(movements.size(), is(0));
+        String knownMmsi = "123456789";
+        Set<String> fishingVessels = new HashSet<>();
+        fishingVessels.add(knownMmsi);
+        ProcessResult result = processService.processMessages(Arrays.asList(getAisPositionMessage()), fishingVessels);
+        Map<String, MovementBaseType> downsampledMovements = result.getDownsampledMovements();
+        assertThat(downsampledMovements.size(), is(0));
     }
+	
     @Test
-    public void notOnlyFishingVesselsTest() {
+    public void onlyFishingVesselsWithEmptyEmptyKnownFishingVesselsTest() {
+        when(startUp.getSetting("onlyFishingVessels")).thenReturn("true");
+        Set<String> fishingVessels = new HashSet<>();
+        ProcessResult result = processService.processMessages(Arrays.asList(getAisPositionMessage()), fishingVessels);
+        Map<String, MovementBaseType> downsampledMovements = result.getDownsampledMovements();
+        assertThat(downsampledMovements.size(), is(1));
+    }
+	
+    @Test
+    public void notOnlyFishingVesselsWithNoFishingVesselTest() {
         when(startUp.getSetting("onlyFishingVessels")).thenReturn("false");
-        ProcessResult result = processService.processMessages(Arrays.asList(getAisPositionMessage()), new HashSet<>());
+        String knownMmsi = "123456789";
+        Set<String> fishingVessels = new HashSet<>();
+        fishingVessels.add(knownMmsi);
+        ProcessResult result =processService.processMessages(Arrays.asList(getAisPositionMessage()), fishingVessels);
         Map<String, MovementBaseType> movements = result.getDownsampledMovements();
         assertThat(movements.size(), is(1));
     }
+	
+    @Test
+    public void notOnlyFishingVesselsWithEmptyKnownFishingVesselsTest() {
+        when(startUp.getSetting("onlyFishingVessels")).thenReturn("false");
+        Set<String> fishingVessels = new HashSet<>();
+        ProcessResult result =processService.processMessages(Arrays.asList(getAisPositionMessage()), fishingVessels);
+        Map<String, MovementBaseType> movements = result.getDownsampledMovements();
+        assertThat(movements.size(), is(1));
+    }
+	
     @Test
     public void positionType18Test() {
         ProcessResult result = processService.processMessages(Arrays.asList(getAisType18Message()), new HashSet<>());
