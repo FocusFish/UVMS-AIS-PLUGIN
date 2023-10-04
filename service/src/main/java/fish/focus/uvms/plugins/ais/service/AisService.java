@@ -155,7 +155,7 @@ public class AisService {
         try {
             if (startUp.isRegistered()) {
                 List<MovementBaseType> list = getAndClearFailedMovementList();
-                exchangeService.sendToExchange(list, startUp.getRegisterClassName());
+                exchangeService.sendMovements(list);
             }
         } catch (Exception e) {
             LOG.error(e.toString(), e);
