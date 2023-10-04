@@ -32,7 +32,6 @@ import fish.focus.uvms.plugins.ais.mapper.AisParser.AisType;
 public class ProcessService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProcessService.class);
-    private static final Logger LOG_AIS_NOT_FISHISING_VESSEL = LoggerFactory.getLogger("aisnofishingvessel");
 
     @Inject
     private StartupBean startUp;
@@ -42,8 +41,6 @@ public class ProcessService {
 
     public ProcessResult processMessages(List<Sentence> sentences, Set<String> knownFishingVessels) {
         long start = System.currentTimeMillis();
-
-        boolean onlyFishingVessels = "true".equalsIgnoreCase(startUp.getSetting("onlyFishingVessels"));
 
         List<MovementBaseType> movements = new ArrayList<>();
         Map<String, MovementBaseType> downsampledMovements = new HashMap<>();
@@ -64,20 +61,16 @@ public class ProcessService {
                         if (knownFishingVessels.contains(movement.getMmsi())) {
                             movements.add(movement);
                         } else {
-                           if (!onlyFishingVessels || knownFishingVessels.isEmpty() ) {
-                             downsampledMovements.put(movement.getMmsi(), movement);
-                           } else {
-                             LOG_AIS_NOT_FISHISING_VESSEL.info("{}-{}", movement.getMmsi(), movement);
-                           }
+                            downsampledMovements.put(movement.getMmsi(), movement);
                         }
                     }
                 } else if (aisType.isStaticReport()) {
                     AssetDTO asset = AisParser.parseStaticReport(binary, aisType);
                     if (asset != null) {
                         downsampledAssets.put(asset.getMmsi(), asset);
-	                    addFishingVessels(asset, knownFishingVessels);
+	                     addFishingVessels(asset, knownFishingVessels);
                     } else {
-			           LOG.error("Couldn't get asset from ais stacic report, ignoring it");
+			           LOG.error("Couldn't get asset from ais static report, ignoring it");
 					}
                 }
             } catch (Exception e) {
@@ -85,7 +78,7 @@ public class ProcessService {
                 LOG.error("Could not parse AIS message {}", sentence, e);
             }
         }
-        exchangeService.sendToExchange(movements, startUp.getRegisterClassName());
+        exchangeService.sendMovements(movements);
         LOG.info("Processing time: {} for {} sentences", (System.currentTimeMillis() - start), sentences.size());
         return new ProcessResult(downsampledMovements, downsampledAssets);
     }
@@ -98,6 +91,8 @@ public class ProcessService {
             knownFishingVessels.remove(asset.getMmsi());
         }
     }
+
+
 
     private String symbolToBinary(String symbolString) {
         try {

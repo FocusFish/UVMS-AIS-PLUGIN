@@ -1,36 +1,22 @@
 package fish.focus.uvms.plugins.ais.service;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.when;
+import fish.focus.schema.exchange.movement.v1.MovementBaseType;
+import fish.focus.uvms.ais.Sentence;
+import fish.focus.uvms.asset.client.model.AssetDTO;
+import fish.focus.uvms.plugins.ais.StartupBean;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.*;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
-import fish.focus.schema.exchange.movement.v1.MovementBaseType;
-import fish.focus.uvms.ais.Sentence;
-import fish.focus.uvms.asset.client.model.AssetDTO;
-import fish.focus.uvms.plugins.ais.StartupBean;
-import fish.focus.uvms.plugins.ais.service.DownsamplingService;
-import fish.focus.uvms.plugins.ais.service.ExchangeService;
-import fish.focus.uvms.plugins.ais.service.ProcessResult;
-import fish.focus.uvms.plugins.ais.service.ProcessService;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 /*
  * Test data taken from https://fossies.org/linux/gpsd/test/sample.aivdm
@@ -42,9 +28,6 @@ public class ProcessServiceTest {
     private StartupBean startUp;
 
     @Mock
-    private DownsamplingService downsamplingService;
-    
-    @Mock
     private ExchangeService exchangeService;
     
     @InjectMocks
@@ -53,12 +36,6 @@ public class ProcessServiceTest {
     @Captor
     private ArgumentCaptor<List<MovementBaseType>> captor;
 
-
-    @Before
-    public void init(){
-        //onlyFishingVessels should be off for all test
-        when(startUp.getSetting("onlyFishingVessels")).thenReturn("false");
-    }
     @Test
     public void aisType1Test() {
         ProcessResult result = processService.processMessages(Arrays.asList(getAisType1Message()), new HashSet<>());
@@ -138,46 +115,7 @@ public class ProcessServiceTest {
         assertThat(movement.getPosition().getLongitude(), is(10.685565));
     }
 	
-    @Test
-    public void onlyFishingVesselsWithNoFishingVesselTest() {
-        when(startUp.getSetting("onlyFishingVessels")).thenReturn("true");
-        String knownMmsi = "123456789";
-        Set<String> fishingVessels = new HashSet<>();
-        fishingVessels.add(knownMmsi);
-        ProcessResult result = processService.processMessages(Arrays.asList(getAisPositionMessage()), fishingVessels);
-        Map<String, MovementBaseType> downsampledMovements = result.getDownsampledMovements();
-        assertThat(downsampledMovements.size(), is(0));
-    }
-	
-    @Test
-    public void onlyFishingVesselsWithEmptyEmptyKnownFishingVesselsTest() {
-        when(startUp.getSetting("onlyFishingVessels")).thenReturn("true");
-        Set<String> fishingVessels = new HashSet<>();
-        ProcessResult result = processService.processMessages(Arrays.asList(getAisPositionMessage()), fishingVessels);
-        Map<String, MovementBaseType> downsampledMovements = result.getDownsampledMovements();
-        assertThat(downsampledMovements.size(), is(1));
-    }
-	
-    @Test
-    public void notOnlyFishingVesselsWithNoFishingVesselTest() {
-        when(startUp.getSetting("onlyFishingVessels")).thenReturn("false");
-        String knownMmsi = "123456789";
-        Set<String> fishingVessels = new HashSet<>();
-        fishingVessels.add(knownMmsi);
-        ProcessResult result =processService.processMessages(Arrays.asList(getAisPositionMessage()), fishingVessels);
-        Map<String, MovementBaseType> movements = result.getDownsampledMovements();
-        assertThat(movements.size(), is(1));
-    }
-	
-    @Test
-    public void notOnlyFishingVesselsWithEmptyKnownFishingVesselsTest() {
-        when(startUp.getSetting("onlyFishingVessels")).thenReturn("false");
-        Set<String> fishingVessels = new HashSet<>();
-        ProcessResult result =processService.processMessages(Arrays.asList(getAisPositionMessage()), fishingVessels);
-        Map<String, MovementBaseType> movements = result.getDownsampledMovements();
-        assertThat(movements.size(), is(1));
-    }
-	
+
     @Test
     public void positionType18Test() {
         ProcessResult result = processService.processMessages(Arrays.asList(getAisType18Message()), new HashSet<>());
@@ -235,7 +173,7 @@ public class ProcessServiceTest {
         Set<String> fishingVessels = new HashSet<>();
         fishingVessels.add(knownMmsi);
         processService.processMessages(Arrays.asList(getAisPositionMessage()), fishingVessels);
-        Mockito.verify(exchangeService).sendToExchange(captor.capture(), Mockito.any());
+        Mockito.verify(exchangeService).sendMovements(captor.capture());
         List<MovementBaseType> movements = captor.getValue();
         assertThat(movements.size(), is(1));
         assertThat(movements.get(0).getMmsi(), is(knownMmsi));
@@ -245,7 +183,7 @@ public class ProcessServiceTest {
     public void notKnownFishingVesselTest() {
         Set<String> fishingVessels = new HashSet<>();
         processService.processMessages(Arrays.asList(getAisPositionMessage()), fishingVessels);
-        Mockito.verify(exchangeService).sendToExchange(captor.capture(), Mockito.any());
+        Mockito.verify(exchangeService).sendMovements(captor.capture());
         List<MovementBaseType> movements = captor.getValue();
         assertThat(movements.size(), is(0));
     }

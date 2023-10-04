@@ -12,10 +12,8 @@ copy of the GNU General Public License along with the IFDM Suite. If not, see <h
 package fish.focus.uvms.plugins.ais.service;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 import javax.annotation.Resource;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -30,6 +28,8 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
+
+import fish.focus.uvms.plugins.ais.StartupBean;
 import org.eclipse.microprofile.metrics.Counter;
 import org.eclipse.microprofile.metrics.annotation.Metric;
 import org.slf4j.Logger;
@@ -57,6 +57,9 @@ public class ExchangeService {
 
     @Inject
     private AisService aisService;
+
+    @Inject
+    private StartupBean startupBean;
     
     @Inject
     @Metric(name = "ais_incoming", absolute = true)
@@ -66,10 +69,16 @@ public class ExchangeService {
     
     public boolean sendAssetUpdates(Collection<AssetDTO> assets) {
         boolean ok = true;
+        if (assets==null || assets.isEmpty()){
+            return ok;
+        }
+
         String json = jsonb.toJson(assets);
         LOG.trace(json);
+        LOG.info("Sending {} ais assets updates to exchange as a json array", assets.size());
+
         try (Connection connection = connectionFactory.createConnection();
-             Session session = connection.createSession(false, 1);
+             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
              MessageProducer producer = session.createProducer(exchangeQueue)
         ) {
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
@@ -93,17 +102,20 @@ public class ExchangeService {
         return ok;
     }
 
-    public void sendToExchange(Collection<MovementBaseType> movements, String pluginName) {
+
+
+    public void sendMovements(Collection<MovementBaseType> movements) {
         LOG.info("Sending {} positions to exchange", movements.size());
         try (Connection connection = connectionFactory.createConnection();
-                Session session = connection.createSession(false, 1);
-                MessageProducer producer = session.createProducer(exchangeQueue)) {
+                Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+                MessageProducer producer = session.createProducer(exchangeQueue)
+        ) {
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 
             // emit
             for (MovementBaseType movement : movements) {
                 try {
-                    SetReportMovementType movementReport = getMovementReport(movement, pluginName);
+                    SetReportMovementType movementReport = getMovementReport(movement, startupBean.getRegisterClassName());
                     String text = ExchangeModuleRequestMapper.createSetMovementReportRequest(movementReport, "AIS", null, Instant.now(),  PluginType.OTHER, "AIS", null);
                     TextMessage message = session.createTextMessage();
                     message.setStringProperty("FUNCTION", ExchangeModuleMethod.SET_MOVEMENT_REPORT.value());
@@ -127,7 +139,7 @@ public class ExchangeService {
     
     public void sendToErrorQueueParsingError(String movement) {
         try (Connection connection = connectionFactory.createConnection();
-                Session session = connection.createSession(false, 1);
+                Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
                 MessageProducer producer = session.createProducer(errorQueue)) {
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 

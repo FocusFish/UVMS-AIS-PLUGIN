@@ -11,6 +11,17 @@ copy of the GNU General Public License along with the IFDM Suite. If not, see <h
  */
 package fish.focus.uvms.plugins.ais.service;
 
+import fish.focus.schema.exchange.movement.v1.MovementBaseType;
+import fish.focus.uvms.asset.client.model.AssetDTO;
+import fish.focus.uvms.plugins.ais.StartupBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Resource;
+import javax.ejb.Schedule;
+import javax.ejb.Singleton;
+import javax.enterprise.concurrent.ManagedExecutorService;
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,18 +29,12 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import javax.annotation.Resource;
-import javax.ejb.Schedule;
-import javax.ejb.Singleton;
-import javax.enterprise.concurrent.ManagedExecutorService;
-import javax.inject.Inject;
-import fish.focus.schema.exchange.movement.v1.MovementBaseType;
-import fish.focus.uvms.asset.client.model.AssetDTO;
-import fish.focus.uvms.plugins.ais.StartupBean;
 
 @Singleton
 public class DownsamplingService {
-
+    private static final Logger LOG= LoggerFactory.getLogger(DownsamplingService.class);
+    private static final Logger LOG_SAVED_MOVEMENTS = LoggerFactory.getLogger("SAVED_MOVEMENTS");
+	
     @Inject
     private StartupBean startUp;
     
@@ -42,16 +47,27 @@ public class DownsamplingService {
     private ConcurrentMap<String, MovementBaseType> downSampledMovements = new ConcurrentHashMap<>();
     private Map<String, AssetDTO> downSampledAssetInfo = new HashMap<>();
     
-//    @Schedule(second = "*/30", minute = "*", hour = "*", persistent = false)
     @Schedule(minute = "*/5", hour = "*", persistent = false )
-    public void sendDownSampledMovements() {
+    public void handleDownSampledMovements() {
         if (downSampledMovements.isEmpty()) {
             return;
         }
+        boolean onlyAisFromFishingVessels="true".equalsIgnoreCase(startUp.getSetting("onlyAisFromFishingVessels"));
+
+        LOG.info ("Handle {} downSampledMovements, onlyAisFromFishingVessels:{}", downSampledMovements.size(),onlyAisFromFishingVessels);
 
         List<MovementBaseType> movements = new ArrayList<>(downSampledMovements.values());
         downSampledMovements.clear();
-        CompletableFuture.runAsync(() -> exchangeService.sendToExchange(movements, startUp.getRegisterClassName()), executorService);
+
+        if (onlyAisFromFishingVessels) {
+            LOG_SAVED_MOVEMENTS.info("---- START logging {} downSampledMovements", movements.size());
+            movements.forEach(movement -> LOG_SAVED_MOVEMENTS.info("{}-{}", movement.getMmsi(), movement));
+            LOG_SAVED_MOVEMENTS.info("#### END logged {} downSampledMovements ####", movements.size());
+
+        } else {
+            CompletableFuture.runAsync(() -> exchangeService.sendMovements(movements), executorService);
+        }
+
     }
     
     @Schedule(minute = "6", hour = "*", persistent = false )
@@ -71,5 +87,5 @@ public class DownsamplingService {
     public Map<String, MovementBaseType> getDownSampledMovements() {
         return downSampledMovements;
     }
-    
+
 }
