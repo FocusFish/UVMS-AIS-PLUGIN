@@ -45,7 +45,9 @@ import fish.focus.uvms.asset.client.model.AssetDTO;
 public class ExchangeService {
     
     private static final Logger LOG = LoggerFactory.getLogger(ExchangeService.class);
-    
+    private static final String NOP = "//NOP: {}";
+    private static final String COULD_NOT_SEND_MOVEMENT = "couldn't send movement";
+
     @Resource(mappedName = "java:/ConnectionFactory")
     private ConnectionFactory connectionFactory;
 
@@ -65,7 +67,7 @@ public class ExchangeService {
     @Metric(name = "ais_incoming", absolute = true)
     private Counter aisIncoming;
     
-    private Jsonb jsonb = JsonbBuilder.create();
+    private final Jsonb jsonb = JsonbBuilder.create();
     
     public boolean sendAssetUpdates(Collection<AssetDTO> assets) {
         boolean ok = true;
@@ -81,29 +83,30 @@ public class ExchangeService {
              Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
              MessageProducer producer = session.createProducer(exchangeQueue)
         ) {
-            producer.setDeliveryMode(DeliveryMode.PERSISTENT);
-            // emit
-            try {
-                String text = ExchangeModuleRequestMapper.createReceiveAssetInformation(json, "AIS", PluginType.OTHER, "AIS Plugin");
-                TextMessage message = session.createTextMessage();
-                message.setStringProperty("FUNCTION", ExchangeModuleMethod.RECEIVE_ASSET_INFORMATION.toString());
-                message.setText(text);
-                producer.setPriority(3); //Lower prio for updating vessel info from AIS than default 4.
-                producer.send(message);
-
-            } catch (RuntimeException e) {
-                LOG.error("Couldn't map movement to setreportmovementtype");
-                sendToErrorQueueParsingError(json);
-            } catch (Exception e) {
-                LOG.info("//NOP: {}", e.getLocalizedMessage());
-            }
+            sendAsset(json, session, producer);
         } catch (JMSException e) {
-            LOG.error("couldn't send movement");
+            LOG.error(COULD_NOT_SEND_MOVEMENT);
             ok = false;
         }
         return ok;
     }
 
+    private void sendAsset(String json, Session session, MessageProducer producer) {
+        try {
+            String text = ExchangeModuleRequestMapper.createReceiveAssetInformation(json, "AIS", PluginType.OTHER, "AIS Plugin");
+            TextMessage message = session.createTextMessage();
+            message.setStringProperty("FUNCTION", ExchangeModuleMethod.RECEIVE_ASSET_INFORMATION.toString());
+            message.setText(text);
+            producer.setDeliveryMode(DeliveryMode.PERSISTENT);
+            producer.setPriority(3); //Lower prio for updating vessel info from AIS than default 4.
+            producer.send(message);
+        } catch (RuntimeException e) {
+            LOG.error("Couldn't map movement to setreportmovementtype");
+            sendToErrorQueueParsingError(json);
+        } catch (Exception e) {
+            LOG.info(NOP, e.getLocalizedMessage());
+        }
+    }
 
 
     public void sendMovements(Collection<MovementBaseType> movements) {
@@ -113,40 +116,43 @@ public class ExchangeService {
                 MessageProducer producer = session.createProducer(exchangeQueue)
         ) {
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
-
             // emit
             for (MovementBaseType movement : movements) {
-                try {
-                    SetReportMovementType movementReport = getMovementReport(movement, startupBean.getRegisterClassName());
-                    String text = ExchangeModuleRequestMapper.createSetMovementReportRequest(movementReport, "AIS", null, Instant.now(),  PluginType.OTHER, "AIS", null);
-                    TextMessage message = session.createTextMessage();
-                    message.setStringProperty("FUNCTION", ExchangeModuleMethod.SET_MOVEMENT_REPORT.value());
-                    message.setText(text);
-
-                    //AIS from SWE prio 3 from others prio 2
-                    if (movement.getFlagState()!=null||"SWE".equalsIgnoreCase(movement.getFlagState())) {
-                        producer.setPriority(3);
-                    } else {
-                        producer.setPriority(2);
-                    }
-
-                    producer.send(message);
-                    aisIncoming.inc();
-                } catch (RuntimeException e) {
-                    LOG.error("Couldn't map movement to setreportmovementtype");
-                    sendToErrorQueueParsingError(movement.toString());
-                } catch (JMSException e) {
-                    // save it and try again in a scheduled thread
-                    aisService.addCachedMovement(movement);
-                } catch (Exception e) {
-                    LOG.info("//NOP: {}", e.getLocalizedMessage());
-                }
+                sendMovement(session, producer, movement);
             }
         } catch (JMSException e) {
-            LOG.error("couldn't send movement");
+            LOG.error(COULD_NOT_SEND_MOVEMENT);
         }
     }
-    
+
+    private void sendMovement(Session session, MessageProducer producer, MovementBaseType movement) {
+        try {
+
+            SetReportMovementType movementReport = getMovementReport(movement, startupBean.getRegisterClassName());
+            String text = ExchangeModuleRequestMapper.createSetMovementReportRequest(movementReport, "AIS", null, Instant.now(),  PluginType.OTHER, "AIS", null);
+            TextMessage message = session.createTextMessage();
+            message.setStringProperty("FUNCTION", ExchangeModuleMethod.SET_MOVEMENT_REPORT.value());
+            message.setText(text);
+            //AIS from SWE prio 3 from others prio 2
+            if (movement.getFlagState()!=null||"SWE".equalsIgnoreCase(movement.getFlagState())) {
+                producer.setPriority(3);
+            } else {
+                producer.setPriority(2);
+            }
+
+            producer.send(message);
+            aisIncoming.inc();
+        } catch (RuntimeException e) {
+            LOG.error("Couldn't map movement to setreportmovementtype");
+            sendToErrorQueueParsingError(movement.toString());
+        } catch (JMSException e) {
+            // save it and try again in a scheduled thread
+            aisService.addCachedMovement(movement);
+        } catch (Exception e) {
+            LOG.info(NOP, e.getLocalizedMessage());
+        }
+    }
+
     public void sendToErrorQueueParsingError(String movement) {
         try (Connection connection = connectionFactory.createConnection();
                 Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -155,20 +161,24 @@ public class ExchangeService {
 
             // emit
 
-            try {
-                BytesMessage message_bytes = session.createBytesMessage();
-                message_bytes.setStringProperty("source", "AIS");
-                message_bytes.setStringProperty("type", "byte");
-                message_bytes.writeBytes(movement.getBytes());
-                producer.send(message_bytes);
-            } catch (Exception e) {
-                LOG.info("//NOP: {}", e.getLocalizedMessage());
-            }
+            sendToErrorQueue(movement, session, producer);
         } catch (JMSException e) {
-            LOG.error("couldn't send movement");
+            LOG.error(COULD_NOT_SEND_MOVEMENT);
         }
     }
-    
+
+    private static void sendToErrorQueue(String movement, Session session, MessageProducer producer) {
+        try {
+            BytesMessage messageBytes = session.createBytesMessage();
+            messageBytes.setStringProperty("source", "AIS");
+            messageBytes.setStringProperty("type", "byte");
+            messageBytes.writeBytes(movement.getBytes());
+            producer.send(messageBytes);
+        } catch (Exception e) {
+            LOG.info(NOP, e.getLocalizedMessage());
+        }
+    }
+
     private SetReportMovementType getMovementReport(MovementBaseType movement, String pluginName) {
         SetReportMovementType report = new SetReportMovementType();
         report.setTimestamp(new Date());
