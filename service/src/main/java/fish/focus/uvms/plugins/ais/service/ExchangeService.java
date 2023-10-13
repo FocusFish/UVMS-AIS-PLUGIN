@@ -88,7 +88,9 @@ public class ExchangeService {
                 TextMessage message = session.createTextMessage();
                 message.setStringProperty("FUNCTION", ExchangeModuleMethod.RECEIVE_ASSET_INFORMATION.toString());
                 message.setText(text);
+                producer.setPriority(3); //Lower prio for updating vessel info from AIS than default 4.
                 producer.send(message);
+
             } catch (RuntimeException e) {
                 LOG.error("Couldn't map movement to setreportmovementtype");
                 sendToErrorQueueParsingError(json);
@@ -120,6 +122,14 @@ public class ExchangeService {
                     TextMessage message = session.createTextMessage();
                     message.setStringProperty("FUNCTION", ExchangeModuleMethod.SET_MOVEMENT_REPORT.value());
                     message.setText(text);
+
+                    //AIS from SWE prio 3 from others prio 2
+                    if (movement.getFlagState()!=null||"SWE".equalsIgnoreCase(movement.getFlagState())) {
+                        producer.setPriority(3);
+                    } else {
+                        producer.setPriority(2);
+                    }
+
                     producer.send(message);
                     aisIncoming.inc();
                 } catch (RuntimeException e) {
