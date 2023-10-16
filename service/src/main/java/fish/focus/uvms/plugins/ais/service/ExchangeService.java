@@ -11,35 +11,27 @@ copy of the GNU General Public License along with the IFDM Suite. If not, see <h
  */
 package fish.focus.uvms.plugins.ais.service;
 
-import java.time.Instant;
-import java.util.Collection;
-import java.util.Date;
-import javax.annotation.Resource;
-import javax.ejb.Stateless;
-import javax.inject.Inject;
-import javax.jms.BytesMessage;
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-import javax.jms.DeliveryMode;
-import javax.jms.JMSException;
-import javax.jms.MessageProducer;
-import javax.jms.Queue;
-import javax.jms.Session;
-import javax.jms.TextMessage;
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
-
+import fish.focus.schema.exchange.module.v1.ExchangeModuleMethod;
+import fish.focus.schema.exchange.movement.v1.MovementBaseType;
+import fish.focus.schema.exchange.movement.v1.SetReportMovementType;
+import fish.focus.schema.exchange.plugin.types.v1.PluginType;
+import fish.focus.uvms.asset.client.model.AssetDTO;
+import fish.focus.uvms.exchange.model.mapper.ExchangeModuleRequestMapper;
 import fish.focus.uvms.plugins.ais.StartupBean;
 import org.eclipse.microprofile.metrics.Counter;
 import org.eclipse.microprofile.metrics.annotation.Metric;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import fish.focus.schema.exchange.module.v1.ExchangeModuleMethod;
-import fish.focus.schema.exchange.movement.v1.MovementBaseType;
-import fish.focus.schema.exchange.movement.v1.SetReportMovementType;
-import fish.focus.schema.exchange.plugin.types.v1.PluginType;
-import fish.focus.uvms.exchange.model.mapper.ExchangeModuleRequestMapper;
-import fish.focus.uvms.asset.client.model.AssetDTO;
+
+import javax.annotation.Resource;
+import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.jms.*;
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.Date;
 
 @Stateless
 public class ExchangeService {
@@ -83,6 +75,8 @@ public class ExchangeService {
              Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
              MessageProducer producer = session.createProducer(exchangeQueue)
         ) {
+            int assetPrio = Integer.parseInt(startupBean.getSetting("prioAsset"));
+            producer.setPriority(assetPrio);
             sendAsset(json, session, producer);
         } catch (JMSException e) {
             LOG.error(COULD_NOT_SEND_MOVEMENT);
@@ -117,7 +111,15 @@ public class ExchangeService {
         ) {
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
             // emit
+            int prioAisSwe = Integer.parseInt(startupBean.getSetting("prioAisSwe"));
+            int prioAisDefault = Integer.parseInt(startupBean.getSetting("prioAisDefault"));
+
             for (MovementBaseType movement : movements) {
+                if (movement.getFlagState()!=null && "SWE".equalsIgnoreCase(movement.getFlagState())) {
+                    producer.setPriority(prioAisSwe);
+                } else {
+                    producer.setPriority(prioAisDefault);
+                }
                 sendMovement(session, producer, movement);
             }
         } catch (JMSException e) {
@@ -133,13 +135,6 @@ public class ExchangeService {
             TextMessage message = session.createTextMessage();
             message.setStringProperty("FUNCTION", ExchangeModuleMethod.SET_MOVEMENT_REPORT.value());
             message.setText(text);
-            //AIS from SWE prio 3 from others prio 2
-            if (movement.getFlagState()!=null||"SWE".equalsIgnoreCase(movement.getFlagState())) {
-                producer.setPriority(3);
-            } else {
-                producer.setPriority(2);
-            }
-
             producer.send(message);
             aisIncoming.inc();
         } catch (RuntimeException e) {
