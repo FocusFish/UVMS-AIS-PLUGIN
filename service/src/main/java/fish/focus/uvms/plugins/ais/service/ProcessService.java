@@ -42,8 +42,8 @@ public class ProcessService {
     public ProcessResult processMessages(List<Sentence> sentences, Set<String> knownFishingVessels) {
         long start = System.currentTimeMillis();
 
-        List<MovementBaseType> movements = new ArrayList<>();
         Map<String, MovementBaseType> downsampledMovements = new HashMap<>();
+        Map<String, MovementBaseType> downSampledFishingVesselMovements = new HashMap<>();
         Map<String, AssetDTO> downsampledAssets = new HashMap<>();
         // collect
         for (Sentence sentence : sentences) {
@@ -59,7 +59,7 @@ public class ProcessService {
 
                     if (movement != null) {
                         if (knownFishingVessels.contains(movement.getMmsi())) {
-                            movements.add(movement);
+                            downSampledFishingVesselMovements.put(movement.getMmsi(), movement);
                         } else {
                             downsampledMovements.put(movement.getMmsi(), movement);
                         }
@@ -78,9 +78,8 @@ public class ProcessService {
                 LOG.error("Could not parse AIS message {}", sentence, e);
             }
         }
-        exchangeService.sendMovements(movements);
         LOG.info("Processing time: {} for {} sentences", (System.currentTimeMillis() - start), sentences.size());
-        return new ProcessResult(downsampledMovements, downsampledAssets);
+        return new ProcessResult(downsampledMovements, downSampledFishingVesselMovements, downsampledAssets);
     }
 
     private void addFishingVessels(AssetDTO asset, Set<String> knownFishingVessels) {
