@@ -35,6 +35,17 @@ public class DownsamplingServiceTest {
     private ArgumentCaptor<Collection<AssetDTO>> captorAssets;
 
     @Test
+    public void sendDownSampledFishingVesselMovementsTest() throws InterruptedException {
+        assertThat(downsamplingService.getDownSampledFishingVesselMovements().size(), is(0));
+        MovementBaseType movementBaseType = new MovementBaseType();
+        movementBaseType.setMmsi("123456789");
+        downsamplingService.getDownSampledFishingVesselMovements().put(movementBaseType.getMmsi(), movementBaseType);
+        assertThat(downsamplingService.getDownSampledFishingVesselMovements().size(), is(1));
+        downsamplingService.handleDownSampledFishingVesselMovements();
+        assertThat(downsamplingService.getDownSampledFishingVesselMovements().size(), is(0));
+    }
+
+    @Test
     public void sendDownSampledMovementsTest() throws InterruptedException {
         when(startUp.getSetting("onlyAisFromFishingVessels")).thenReturn("false");
 

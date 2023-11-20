@@ -18,16 +18,27 @@ import fish.focus.uvms.asset.client.model.AssetDTO;
 public class ProcessResult {
 
     private Map<String, MovementBaseType> downsampledMovements;
+    private Map<String, MovementBaseType> downSampledFishingVesselMovements;
     private Map<String, AssetDTO> downsampledAssets;
     
-    public ProcessResult(Map<String, MovementBaseType> downsampledMovements, Map<String, AssetDTO> downsampledAssets) {
+    public ProcessResult(Map<String, MovementBaseType> downsampledMovements, Map<String, MovementBaseType> downSampledFishingVesselMovements, Map<String, AssetDTO> downsampledAssets) {
         this.downsampledMovements = downsampledMovements;
+        this.downSampledFishingVesselMovements = downSampledFishingVesselMovements;
         this.downsampledAssets = downsampledAssets;
     }
     
     public Map<String, MovementBaseType> getDownsampledMovements() {
         return downsampledMovements;
     }
+
+    public Map<String, MovementBaseType> getDownSampledFishingVesselMovements() {
+        return downSampledFishingVesselMovements;
+    }
+
+    public void setDownSampledFishingVesselMovements(Map<String, MovementBaseType> downSampledFishingVesselMovements) {
+        this.downSampledFishingVesselMovements = downSampledFishingVesselMovements;
+    }
+
     public void setDownsampledMovements(Map<String, MovementBaseType> downsampledMovements) {
         this.downsampledMovements = downsampledMovements;
     }

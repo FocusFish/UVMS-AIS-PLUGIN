@@ -43,10 +43,22 @@ public class DownsamplingService {
     
     @Resource
     private ManagedExecutorService executorService;
-    
+
+    private ConcurrentMap<String, MovementBaseType> downSampledFishingVesselMovements = new ConcurrentHashMap<>();
     private ConcurrentMap<String, MovementBaseType> downSampledMovements = new ConcurrentHashMap<>();
     private Map<String, AssetDTO> downSampledAssetInfo = new HashMap<>();
-    
+
+    @Schedule(minute = "*/1", hour = "*", persistent = false )
+    public void handleDownSampledFishingVesselMovements() {
+        if (downSampledFishingVesselMovements.isEmpty()) {
+            return;
+        }
+        LOG.info ("Handle {} downSampledFishingVesselMovements", downSampledFishingVesselMovements.size());
+        List<MovementBaseType> movements = new ArrayList<>(downSampledFishingVesselMovements.values());
+        downSampledFishingVesselMovements.clear();
+        CompletableFuture.runAsync(() -> exchangeService.sendMovements(movements), executorService);
+    }
+
     @Schedule(minute = "*/5", hour = "*", persistent = false )
     public void handleDownSampledMovements() {
         if (downSampledMovements.isEmpty()) {
@@ -86,6 +98,10 @@ public class DownsamplingService {
 
     public Map<String, MovementBaseType> getDownSampledMovements() {
         return downSampledMovements;
+    }
+
+    public Map<String, MovementBaseType> getDownSampledFishingVesselMovements() {
+        return downSampledFishingVesselMovements;
     }
 
 }
