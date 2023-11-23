@@ -143,6 +143,7 @@ public class AisService {
                     .thenAccept(result -> {
                         downsamplingService.getDownSampledMovements().putAll(result.getDownsampledMovements());
                         downsamplingService.getStoredAssetInfo().putAll(result.getDownsampledAssets());
+                        downsamplingService.getDownSampledFishingVesselMovements().putAll(result.getDownSampledFishingVesselMovements());
                         }
                     );
             processes.add(process);

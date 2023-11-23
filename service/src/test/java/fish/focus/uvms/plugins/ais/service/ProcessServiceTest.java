@@ -6,7 +6,10 @@ import fish.focus.uvms.asset.client.model.AssetDTO;
 import fish.focus.uvms.plugins.ais.StartupBean;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.time.Instant;
@@ -172,20 +175,16 @@ public class ProcessServiceTest {
         String knownMmsi = "219024194";
         Set<String> fishingVessels = new HashSet<>();
         fishingVessels.add(knownMmsi);
-        processService.processMessages(Arrays.asList(getAisPositionMessage()), fishingVessels);
-        Mockito.verify(exchangeService).sendMovements(captor.capture());
-        List<MovementBaseType> movements = captor.getValue();
-        assertThat(movements.size(), is(1));
-        assertThat(movements.get(0).getMmsi(), is(knownMmsi));
+        ProcessResult result = processService.processMessages(Arrays.asList(getAisPositionMessage()), fishingVessels);
+        assertThat(result.getDownSampledFishingVesselMovements().size(), is(1));
+        assertThat(result.getDownSampledFishingVesselMovements().get(knownMmsi).getMmsi(), is(knownMmsi));
     }
     
     @Test
     public void notKnownFishingVesselTest() {
         Set<String> fishingVessels = new HashSet<>();
-        processService.processMessages(Arrays.asList(getAisPositionMessage()), fishingVessels);
-        Mockito.verify(exchangeService).sendMovements(captor.capture());
-        List<MovementBaseType> movements = captor.getValue();
-        assertThat(movements.size(), is(0));
+        ProcessResult result = processService.processMessages(Arrays.asList(getAisPositionMessage()), fishingVessels);
+        assertThat(result.getDownSampledFishingVesselMovements().size(), is(0));
     }
     
     @Test
