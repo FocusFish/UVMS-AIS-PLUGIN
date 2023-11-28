@@ -12,13 +12,13 @@ copy of the GNU General Public License along with the IFDM Suite. If not, see <h
 package fish.focus.uvms.plugins.ais.service;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.*;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+
+import fish.focus.uvms.asset.client.AssetClient;
+import fish.focus.uvms.asset.client.model.AssetIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import fish.focus.schema.exchange.movement.v1.MovementBaseType;
@@ -38,6 +38,11 @@ public class ProcessService {
     
     @Inject
     private ExchangeService exchangeService;
+
+    @Inject
+    private AssetClient assetClient;
+
+    private HashMap<String, VesselTypeCacheEntry> vesselTypeCache = new HashMap<>();
 
     public ProcessResult processMessages(List<Sentence> sentences, Set<String> knownFishingVessels) {
         long start = System.currentTimeMillis();
@@ -68,7 +73,7 @@ public class ProcessService {
                     AssetDTO asset = AisParser.parseStaticReport(binary, aisType);
                     if (asset != null) {
                         downsampledAssets.put(asset.getMmsi(), asset);
-	                     addFishingVessels(asset, knownFishingVessels);
+	                    addFishingVessels(asset, knownFishingVessels);
                     } else {
 			           LOG.error("Couldn't get asset from ais static report, ignoring it");
 					}
@@ -83,7 +88,7 @@ public class ProcessService {
     }
 
     private void addFishingVessels(AssetDTO asset, Set<String> knownFishingVessels) {
-        if (asset.getVesselType() != null && asset.getVesselType().equals("Fishing")) {
+        if ((asset.getVesselType() != null && asset.getVesselType().equals("Fishing")) || isActiveFishingVessel(asset.getMmsi())) {
             knownFishingVessels.add(asset.getMmsi());
         } else if (knownFishingVessels.contains(asset.getMmsi()) && asset.getVesselType() != null) {
             LOG.debug("Removing mmsi {} as fishing vessel, is now {}", asset.getMmsi(), asset.getVesselType());
@@ -91,6 +96,24 @@ public class ProcessService {
         }
     }
 
+    private boolean isActiveFishingVessel(String mmsi) {
+        LocalDateTime currentTime = LocalDateTime.now();
+        VesselTypeCacheEntry vesselEntry = vesselTypeCache.get(mmsi);
+        if (vesselEntry != null) {
+            LocalDateTime cacheDate = vesselEntry.getCacheDate();
+            if (cacheDate != null && cacheDate.isAfter(currentTime.minusDays(1L))) {
+                return vesselEntry.isActiveFishingVessel();
+            }
+            vesselTypeCache.remove(vesselEntry);
+        }
+        AssetDTO assetDTO = assetClient.getAssetById(AssetIdentifier.MMSI, mmsi);
+        boolean activeFishingVessel = assetDTO != null && assetDTO.getActive() != null && assetDTO.getActive().booleanValue();
+        VesselTypeCacheEntry vesselTypeCacheEntry = new VesselTypeCacheEntry();
+        vesselTypeCacheEntry.setActiveFishingVessel(activeFishingVessel);
+        vesselTypeCacheEntry.setCacheDate(LocalDateTime.now());
+        vesselTypeCache.put(mmsi, vesselTypeCacheEntry);
+        return activeFishingVessel;
+    }
 
 
     private String symbolToBinary(String symbolString) {
