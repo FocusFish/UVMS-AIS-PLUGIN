@@ -5,7 +5,7 @@
     <parent>
         <groupId>fish.focus.uvms.plugins.ais</groupId>
         <artifactId>ais</artifactId>
-        <version>3.1.24</version>
+        <version>3.1.25</version>
     </parent>
 
     <artifactId>ais-service</artifactId>
@@ -19,12 +19,6 @@
     </properties>
 
     <dependencies>
-
-        <dependency>
-            <groupId>fish.focus.uvms.asset</groupId>
-            <version>6.8.27</version>
-            <artifactId>asset-client</artifactId>
-        </dependency>
         <dependency>
             <groupId>fish.focus.uvms.exchange</groupId>
             <artifactId>exchange-model</artifactId>
