@@ -12,21 +12,16 @@ copy of the GNU General Public License along with the IFDM Suite. If not, see <h
 package fish.focus.uvms.plugins.ais.service;
 
 import fish.focus.schema.exchange.movement.v1.MovementBaseType;
-import fish.focus.uvms.asset.client.model.AssetDTO;
 import fish.focus.uvms.plugins.ais.StartupBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Resource;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
-import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -40,24 +35,8 @@ public class DownsamplingService {
     
     @Inject
     private ExchangeService exchangeService;
-    
-    @Resource
-    private ManagedExecutorService executorService;
 
-    private ConcurrentMap<String, MovementBaseType> downSampledFishingVesselMovements = new ConcurrentHashMap<>();
     private ConcurrentMap<String, MovementBaseType> downSampledMovements = new ConcurrentHashMap<>();
-    private Map<String, AssetDTO> downSampledAssetInfo = new HashMap<>();
-
-    @Schedule(minute = "*/1", hour = "*", persistent = false )
-    public void handleDownSampledFishingVesselMovements() {
-        if (downSampledFishingVesselMovements.isEmpty()) {
-            return;
-        }
-        LOG.info ("Handle {} downSampledFishingVesselMovements", downSampledFishingVesselMovements.size());
-        List<MovementBaseType> movements = new ArrayList<>(downSampledFishingVesselMovements.values());
-        downSampledFishingVesselMovements.clear();
-        CompletableFuture.runAsync(() -> exchangeService.sendMovements(movements), executorService);
-    }
 
     @Schedule(minute = "*/5", hour = "*", persistent = false )
     public void handleDownSampledMovements() {
@@ -77,31 +56,12 @@ public class DownsamplingService {
             LOG_SAVED_MOVEMENTS.info("#### END logged {} downSampledMovements ####", movements.size());
 
         } else {
-            CompletableFuture.runAsync(() -> exchangeService.sendMovements(movements), executorService);
+            exchangeService.sendMovements(movements);
         }
-
-    }
-    
-    @Schedule(minute = "6", hour = "*", persistent = false )
-    public void sendAssetUpdates() {
-        if (!startUp.isEnabled()) {
-            return;
-        }
-        exchangeService.sendAssetUpdates(downSampledAssetInfo.values());
-        downSampledAssetInfo.clear();
-    }
-    
-
-    public Map<String, AssetDTO> getStoredAssetInfo(){
-        return downSampledAssetInfo;
     }
 
     public Map<String, MovementBaseType> getDownSampledMovements() {
         return downSampledMovements;
-    }
-
-    public Map<String, MovementBaseType> getDownSampledFishingVesselMovements() {
-        return downSampledFishingVesselMovements;
     }
 
 }
