@@ -60,7 +60,13 @@ public class AisService {
     
     @Inject
     private DownsamplingService downsamplingService;
-    
+
+    @Inject
+    private DownsamplingFishingService downsamplingFishingService;
+
+    @Inject
+    private DownsamplingAssetService downsamplingAssetService;
+
     @Inject
     private ExchangeService exchangeService;
     
@@ -142,8 +148,8 @@ public class AisService {
             CompletableFuture<Void> process = CompletableFuture.supplyAsync(() -> processService.processMessages(sentences, knownFishingVessels), executorService)
                     .thenAccept(result -> {
                         downsamplingService.getDownSampledMovements().putAll(result.getDownsampledMovements());
-                        downsamplingService.getStoredAssetInfo().putAll(result.getDownsampledAssets());
-                        downsamplingService.getDownSampledFishingVesselMovements().putAll(result.getDownSampledFishingVesselMovements());
+                        downsamplingAssetService.getStoredAssetInfo().putAll(result.getDownsampledAssets());
+                        downsamplingFishingService.getDownSampledFishingVesselMovements().putAll(result.getDownSampledFishingVesselMovements());
                         }
                     );
             processes.add(process);
