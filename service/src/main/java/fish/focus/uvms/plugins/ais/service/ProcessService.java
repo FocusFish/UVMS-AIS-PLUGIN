@@ -11,22 +11,30 @@ copy of the GNU General Public License along with the IFDM Suite. If not, see <h
  */
 package fish.focus.uvms.plugins.ais.service;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import fish.focus.schema.exchange.movement.v1.MovementBaseType;
 import fish.focus.uvms.ais.Sentence;
+import fish.focus.uvms.asset.client.AssetClient;
 import fish.focus.uvms.asset.client.model.AssetDTO;
+import fish.focus.uvms.asset.client.model.AssetIdentifier;
 import fish.focus.uvms.plugins.ais.StartupBean;
 import fish.focus.uvms.plugins.ais.mapper.AisParser;
 import fish.focus.uvms.plugins.ais.mapper.AisParser.AisType;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 @Stateless
 public class ProcessService {
@@ -38,6 +46,25 @@ public class ProcessService {
     
     @Inject
     private ExchangeService exchangeService;
+
+    @Inject
+    private AssetClient assetClient;
+
+    private LoadingCache fishingVesselCache;
+
+    public ProcessService() {
+        fishingVesselCache = CacheBuilder.newBuilder()
+                                         .maximumSize(1000)
+                                         .expireAfterWrite(Duration.ofMinutes(5L))
+                                         .build(new CacheLoader<AssetDTO, AssetDTO>() {
+                                            public AssetDTO load(AssetDTO assetReport) {
+                                                if (StringUtils.isNotBlank(assetReport.getMmsi())) {
+                                                    return assetClient.getAssetById(AssetIdentifier.MMSI, assetReport.getMmsi());
+                                                }
+                                                return assetReport;
+                                            }
+                                         });
+    }
 
     public ProcessResult processMessages(List<Sentence> sentences, Set<String> knownFishingVessels) {
         long start = System.currentTimeMillis();
@@ -82,13 +109,20 @@ public class ProcessService {
         return new ProcessResult(downsampledMovements, downSampledFishingVesselMovements, downsampledAssets);
     }
 
-    private void addFishingVessels(AssetDTO asset, Set<String> knownFishingVessels) {
+    private void addFishingVessels(AssetDTO assetReport, Set<String> knownFishingVessels) {
+        AssetDTO asset  = assetReport;
+        try {
+            asset = (AssetDTO) fishingVesselCache.get(assetReport);
+        } catch (ExecutionException e) {
+            LOG.info("Cannot load asset from cache", e);
+        }
         if ((asset.getVesselType() != null && asset.getVesselType().equals("Fishing")) || Boolean.TRUE.equals(asset.getActive())) {
             knownFishingVessels.add(asset.getMmsi());
         } else if (knownFishingVessels.contains(asset.getMmsi()) && asset.getVesselType() != null) {
             LOG.debug("Removing mmsi {} as fishing vessel, is now {}", asset.getMmsi(), asset.getVesselType());
             knownFishingVessels.remove(asset.getMmsi());
         }
+
     }
 
     private String symbolToBinary(String symbolString) {
