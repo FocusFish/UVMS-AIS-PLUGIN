@@ -15,14 +15,15 @@
     <properties>
         <application.name>${project.parent.artifactId}</application.name>
         <application.responseTopicName>PLUGIN_RESPONSE</application.responseTopicName>
-        <application.groupid>${project.parent.groupId}</application.groupid> 
+        <application.groupid>${project.parent.groupId}</application.groupid>
+        <uvms.asset.client.version>6.8.29</uvms.asset.client.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>fish.focus.uvms.asset</groupId>
             <artifactId>asset-client</artifactId>
-            <version>6.8.29-SNAPSHOT</version>
+            <version>${uvms.asset.client.version}</version>
         </dependency>
         <dependency>
             <groupId>fish.focus.uvms.exchange</groupId>
