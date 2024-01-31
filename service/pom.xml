@@ -5,7 +5,7 @@
     <parent>
         <groupId>fish.focus.uvms.plugins.ais</groupId>
         <artifactId>ais</artifactId>
-        <version>3.1.26</version>
+        <version>3.1.27</version>
     </parent>
 
     <artifactId>ais-service</artifactId>
@@ -15,10 +15,16 @@
     <properties>
         <application.name>${project.parent.artifactId}</application.name>
         <application.responseTopicName>PLUGIN_RESPONSE</application.responseTopicName>
-        <application.groupid>${project.parent.groupId}</application.groupid> 
+        <application.groupid>${project.parent.groupId}</application.groupid>
+        <uvms.asset.client.version>6.8.29</uvms.asset.client.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>fish.focus.uvms.asset</groupId>
+            <artifactId>asset-client</artifactId>
+            <version>${uvms.asset.client.version}</version>
+        </dependency>
         <dependency>
             <groupId>fish.focus.uvms.exchange</groupId>
             <artifactId>exchange-model</artifactId>
@@ -39,6 +45,11 @@
             <artifactId>jaxb-impl</artifactId>
             <version>2.3.3</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>fish.focus.uvms.commons</groupId>
+            <artifactId>uvms-commons-cache</artifactId>
+            <version>${uvms.common.version}</version>
         </dependency>
     </dependencies>
     
