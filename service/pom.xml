@@ -46,9 +46,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>33.0.0-jre</version>
+            <groupId>fish.focus.uvms.commons</groupId>
+            <artifactId>uvms-commons-cache</artifactId>
+            <version>${uvms.common.version}</version>
         </dependency>
     </dependencies>
     
