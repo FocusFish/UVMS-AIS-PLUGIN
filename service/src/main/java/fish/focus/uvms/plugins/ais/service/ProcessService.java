@@ -13,20 +13,16 @@ package fish.focus.uvms.plugins.ais.service;
 
 import fish.focus.schema.exchange.movement.v1.MovementBaseType;
 import fish.focus.uvms.ais.Sentence;
-import fish.focus.uvms.asset.client.AssetClient;
 import fish.focus.uvms.asset.client.model.AssetDTO;
-import fish.focus.uvms.asset.client.model.AssetIdentifier;
 import fish.focus.uvms.commons.cache.HavCache;
 import fish.focus.uvms.plugins.ais.StartupBean;
 import fish.focus.uvms.plugins.ais.mapper.AisParser;
 import fish.focus.uvms.plugins.ais.mapper.AisParser.AisType;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -45,13 +41,7 @@ public class ProcessService {
     private ExchangeService exchangeService;
 
     @Inject
-    private AssetClient assetClient;
-
-    private HavCache<String, AssetDTO> fishingVesselCache;
-
-    public ProcessService() {
-        fishingVesselCache = new HavCache<>(mmsi -> StringUtils.isBlank(mmsi) ? null : assetClient.getAssetById(AssetIdentifier.MMSI, mmsi), Duration.ofMinutes(5L));
-    }
+    private FishingVesselCache fishingVesselCache;
 
     public ProcessResult processMessages(List<Sentence> sentences, Set<String> knownFishingVessels) {
         long start = System.currentTimeMillis();
