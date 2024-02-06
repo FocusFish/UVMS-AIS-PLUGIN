@@ -40,7 +40,7 @@ public class ProcessServiceTest {
     private ExchangeService exchangeService;
 
     @Mock
-    private AssetClient assetClient;
+    private FishingVesselCache fishingVesselCache;
 
     @InjectMocks
     private ProcessService processService;
@@ -53,7 +53,7 @@ public class ProcessServiceTest {
         AssetDTO assetDto = new AssetDTO();
         assetDto.setActive(Boolean.TRUE);
         assetDto.setMmsi("261061000");
-        when(assetClient.getAssetById(any(AssetIdentifier.class), anyString())).thenReturn(assetDto);
+        when(fishingVesselCache.get(anyString(), any(AssetDTO.class))).thenReturn(assetDto);
     }
 
     @Test
