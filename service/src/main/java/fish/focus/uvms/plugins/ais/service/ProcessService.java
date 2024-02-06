@@ -41,7 +41,7 @@ public class ProcessService {
     private ExchangeService exchangeService;
 
     @Inject
-    private HavCache<String, AssetDTO> fishingVesselCache;
+    private FishingVesselCache fishingVesselCache;
 
     public ProcessResult processMessages(List<Sentence> sentences, Set<String> knownFishingVessels) {
         long start = System.currentTimeMillis();
