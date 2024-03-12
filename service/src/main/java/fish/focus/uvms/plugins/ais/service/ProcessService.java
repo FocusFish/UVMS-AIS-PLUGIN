@@ -86,8 +86,7 @@ public class ProcessService {
         return new ProcessResult(downsampledMovements, downSampledFishingVesselMovements, downsampledAssets);
     }
 
-    private void addFishingVessels(AssetDTO assetReport, Set<String> knownFishingVessels) {
-        AssetDTO asset  = fishingVesselCache.get(assetReport.getMmsi(), assetReport);
+    private void addFishingVessels(AssetDTO asset, Set<String> knownFishingVessels) {
         if ((asset.getVesselType() != null && asset.getVesselType().equals("Fishing")) || Boolean.TRUE.equals(asset.getActive())) {
             knownFishingVessels.add(asset.getMmsi());
         } else if (knownFishingVessels.contains(asset.getMmsi()) && asset.getVesselType() != null) {
