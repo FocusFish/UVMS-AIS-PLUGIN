@@ -2,9 +2,7 @@ package fish.focus.uvms.plugins.ais.service;
 
 import fish.focus.schema.exchange.movement.v1.MovementBaseType;
 import fish.focus.uvms.ais.Sentence;
-import fish.focus.uvms.asset.client.AssetClient;
 import fish.focus.uvms.asset.client.model.AssetDTO;
-import fish.focus.uvms.asset.client.model.AssetIdentifier;
 import fish.focus.uvms.plugins.ais.StartupBean;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,9 +21,6 @@ import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 
 /*
  * Test data taken from https://fossies.org/linux/gpsd/test/sample.aivdm
@@ -53,7 +48,6 @@ public class ProcessServiceTest {
         AssetDTO assetDto = new AssetDTO();
         assetDto.setActive(Boolean.TRUE);
         assetDto.setMmsi("261061000");
-        when(fishingVesselCache.get(anyString(), any(AssetDTO.class))).thenReturn(assetDto);
     }
 
     @Test
