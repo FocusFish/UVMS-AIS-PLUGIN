@@ -278,6 +278,9 @@ public class AisParser {
         if(mmsi != null && mmsi.length() >= 3) {
             String cc = mmsi.substring(0, 3);
             ansi3 = Conversion.getAnsi3ForCountryCode(cc);
+            if ("ERR".equals(ansi3)) {
+                LOG.info("Vessel with mmsi={} has unknown country code={}", mmsi, cc);
+            }
         }
         return ansi3;
     }
