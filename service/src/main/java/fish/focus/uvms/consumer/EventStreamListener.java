@@ -42,17 +42,17 @@ public class EventStreamListener implements MessageListener {
 
     @Override
     public void onMessage(Message inMessage) {
-        LOG.info("On message event stream listener for ais");
+        LOG.debug("On message event stream listener for ais");
 
         TextMessage textMessage = (TextMessage) inMessage;
         try {
             AssetDTO asset = jsonb.fromJson(textMessage.getText(), AssetDTO.class);
             Set<String> knownFishingVessels = aisService.getKnownFishingVessels();
             if (asset.getVesselType() != null && asset.getVesselType().equals("Fishing")) {
-                LOG.info("Adding mmsi {} as fishing vessel, is now {}", asset.getMmsi(), asset.getVesselType());
+                LOG.debug("Adding mmsi {} as fishing vessel, is now {}", asset.getMmsi(), asset.getVesselType());
                 knownFishingVessels.add(asset.getMmsi());
             } else if (knownFishingVessels.contains(asset.getMmsi())) {
-                LOG.info("Removing mmsi {} as fishing vessel, is now {}", asset.getMmsi(), asset.getVesselType());
+                LOG.debug("Removing mmsi {} as fishing vessel, is now {}", asset.getMmsi(), asset.getVesselType());
                 knownFishingVessels.remove(asset.getMmsi());
             }
         } catch (RuntimeException e) {

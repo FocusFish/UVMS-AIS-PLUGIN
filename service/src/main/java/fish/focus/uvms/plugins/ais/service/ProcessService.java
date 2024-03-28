@@ -84,12 +84,8 @@ public class ProcessService {
 
     private void addFishingVessels(AssetDTO asset, Set<String> knownFishingVessels) {
         if ((asset.getVesselType() != null && asset.getVesselType().equals("Fishing")) || Boolean.TRUE.equals(asset.getActive())) {
-            knownFishingVessels.add(asset.getMmsi());
-        } else if (knownFishingVessels.contains(asset.getMmsi()) && asset.getVesselType() != null) {
-            LOG.debug("Removing mmsi {} as fishing vessel, is now {}", asset.getMmsi(), asset.getVesselType());
-            knownFishingVessels.remove(asset.getMmsi());
+            knownFishingVessels.add(asset.getMmsi()); // knownFishingVessels is also changed by EventStreamListener
         }
-
     }
 
     private String symbolToBinary(String symbolString) {
