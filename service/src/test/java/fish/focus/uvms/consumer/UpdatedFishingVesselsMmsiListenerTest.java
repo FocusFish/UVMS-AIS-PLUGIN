@@ -17,13 +17,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 @RunWith(MockitoJUnitRunner.class)
-public class EventStreamListenerTest extends TestCase {
+public class UpdatedFishingVesselsMmsiListenerTest extends TestCase {
 
     @Mock
     private AisService aisService;
 
     @InjectMocks
-    private EventStreamListener eventStreamListener;
+    private UpdatedFishingVesselsMmsiListener updatedFishingVesselMmsiListener;
 
     @Test
     public void testOnMessage() throws JMSException {
@@ -32,12 +32,12 @@ public class EventStreamListenerTest extends TestCase {
         Mockito.when(message.getText()).thenReturn(json);
         Set<String> knownFishingVessels = new HashSet<>();
         Mockito.when(aisService.getKnownFishingVessels()).thenReturn(knownFishingVessels);
-        eventStreamListener.jsonb = Mockito.mock(Jsonb.class);
+        updatedFishingVesselMmsiListener.jsonb = Mockito.mock(Jsonb.class);
         AssetDTO assetDTO = new AssetDTO();
         assetDTO.setMmsi("123");
         assetDTO.setVesselType("Fishing");
-        Mockito.when(eventStreamListener.jsonb.fromJson(Mockito.anyString(), Mockito.any(Class.class))).thenReturn(assetDTO);
-        eventStreamListener.onMessage(message);
+        Mockito.when(updatedFishingVesselMmsiListener.jsonb.fromJson(Mockito.anyString(), Mockito.any(Class.class))).thenReturn(assetDTO);
+        updatedFishingVesselMmsiListener.onMessage(message);
         assertEquals(1, knownFishingVessels.size());
     }
 }
