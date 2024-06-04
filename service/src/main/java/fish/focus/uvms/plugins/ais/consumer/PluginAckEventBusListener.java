@@ -17,7 +17,6 @@ import fish.focus.schema.exchange.registry.v1.UnregisterServiceResponse;
 import fish.focus.uvms.exchange.model.constant.ExchangeModelConstants;
 import fish.focus.uvms.exchange.model.mapper.JAXBMarshaller;
 import fish.focus.uvms.plugins.ais.StartupBean;
-import fish.focus.uvms.plugins.ais.service.PluginService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,9 +39,6 @@ public class PluginAckEventBusListener implements MessageListener {
 
     @EJB
     StartupBean startupService;
-
-    @EJB
-    PluginService aisService;
 
     @Override
     public void onMessage(Message inMessage) {
@@ -72,7 +68,7 @@ public class PluginAckEventBusListener implements MessageListener {
                                 startupService.setRegistered(Boolean.FALSE);
                                 break;
                             default:
-                                LOG.error("[ Type not supperted: {}]", request.getMethod());
+                                LOG.error("[ Type not supported: {}]", request.getMethod());
                         }
                         break;
                     case UNREGISTER_SERVICE:

@@ -21,13 +21,15 @@ import fish.focus.uvms.exchange.model.mapper.ExchangeModuleRequestMapper;
 import fish.focus.uvms.plugins.ais.mapper.ServiceMapper;
 import fish.focus.uvms.plugins.ais.producer.PluginMessageProducer;
 import fish.focus.uvms.plugins.ais.service.FileHandlerBean;
-import fish.focus.uvms.plugins.ais.service.ProcessService;
+import org.eclipse.microprofile.metrics.Counter;
+import org.eclipse.microprofile.metrics.annotation.Metric;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.ejb.*;
+import javax.inject.Inject;
 import javax.jms.JMSException;
 import java.util.Map;
 
@@ -39,12 +41,17 @@ public class StartupBean extends PluginDataHolder {
     private static final Logger LOG = LoggerFactory.getLogger(StartupBean.class);
 
     private static final int MAX_NUMBER_OF_TRIES = 10;
+
     @EJB
     PluginMessageProducer messageProducer;
+
     @EJB
     FileHandlerBean fileHandler;
-    @EJB
-    ProcessService processService;
+
+    @Inject
+    @Metric(name = "ais_incoming", absolute = true)
+    private Counter aisIncoming;
+
     private boolean registered = false;
     private boolean enabled = false;
     private boolean waitingForResponse = false;
@@ -193,5 +200,9 @@ public class StartupBean extends PluginDataHolder {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public void incrementAisIncoming() {
+        aisIncoming.inc();
     }
 }

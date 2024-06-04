@@ -14,7 +14,6 @@ package fish.focus.uvms.plugins.ais.service;
 import fish.focus.schema.exchange.movement.v1.MovementBaseType;
 import fish.focus.uvms.ais.Sentence;
 import fish.focus.uvms.asset.client.model.AssetDTO;
-import fish.focus.uvms.plugins.ais.StartupBean;
 import fish.focus.uvms.plugins.ais.mapper.AisParser;
 import fish.focus.uvms.plugins.ais.mapper.AisParser.AisType;
 import org.slf4j.Logger;
@@ -32,9 +31,6 @@ import java.util.Set;
 public class ProcessService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProcessService.class);
-
-    @Inject
-    private StartupBean startUp;
 
     @Inject
     private ExchangeService exchangeService;
