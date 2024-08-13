@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -25,8 +26,8 @@
             <version>${exchange.model.version}</version>
         </dependency>
         <dependency>
-	        <groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
         </dependency>
         <dependency>
             <groupId>fish.focus.uvms.plugins.ais</groupId>
@@ -46,7 +47,7 @@
             <version>${uvms.common.version}</version>
         </dependency>
     </dependencies>
-    
+
     <build>
         <finalName>${project.name}-${project.version}</finalName>
         <plugins>

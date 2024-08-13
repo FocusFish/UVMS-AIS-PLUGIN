@@ -11,13 +11,6 @@ copy of the GNU General Public License along with the IFDM Suite. If not, see <h
  */
 package fish.focus.uvms.plugins.ais.mapper;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import fish.focus.schema.exchange.module.v1.ExchangeModuleMethod;
 import fish.focus.schema.exchange.module.v1.ReceiveAssetInformationRequest;
 import fish.focus.schema.exchange.movement.asset.v1.AssetId;
@@ -28,6 +21,14 @@ import fish.focus.schema.exchange.movement.v1.MovementPoint;
 import fish.focus.schema.exchange.movement.v1.MovementSourceType;
 import fish.focus.uvms.asset.client.model.AssetDTO;
 import fish.focus.uvms.plugins.ais.service.Conversion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 
 public class AisParser {
 
@@ -35,37 +36,10 @@ public class AisParser {
 
     //according to: http://emsa.europa.eu/cise-documentation/cise-data-model-1.5.3/model/guidelines/687507181.html
     private static final int AIS_SPEED_ERROR_CODE = 1023;
-    
-    private AisParser() {}
-    
-    public enum AisType {
-        TYPE1(Type.POSITION), 
-        TYPE2(Type.POSITION), 
-        TYPE3(Type.POSITION), 
-        TYPE5(Type.STATIC), 
-        TYPE18(Type.POSITION), 
-        TYPE24(Type.STATIC),
-        UNKNOWN(null);
-        
-        private Type type;
-        
-        private AisType(Type type) {
-            this.type = type;
-        }
-        
-        public boolean isPositionReport() {
-            return Type.POSITION.equals(type);
-        }
-        
-        public boolean isStaticReport() {
-            return Type.STATIC.equals(type);
-        }
-        
-        private enum Type {
-            POSITION, STATIC;
-        }
+
+    private AisParser() {
     }
-    
+
     public static AisType parseAisType(String binary) {
         if (binary == null) {
             return AisType.UNKNOWN;
@@ -88,7 +62,7 @@ public class AisParser {
                 return AisType.UNKNOWN;
         }
     }
-    
+
     public static MovementBaseType parsePositionReport(String binary, AisType aisType, Instant lesTimestamp) {
         switch (aisType) {
             case TYPE1:
@@ -101,7 +75,7 @@ public class AisParser {
                 return null;
         }
     }
-    
+
     public static AssetDTO parseStaticReport(String binary, AisType aisType) {
         switch (aisType) {
             case TYPE5:
@@ -112,16 +86,15 @@ public class AisParser {
                 return null;
         }
     }
-    
+
     public static MovementBaseType parseReportType123(String binary, Instant lesTimestamp) {
         MovementBaseType movement = new MovementBaseType();
         Integer messageType = Integer.parseInt(binary.substring(0, 6), 2);
         movement.setStatus(messageType.toString());
         Integer mmsiNumeric = Integer.MIN_VALUE;
-        try{
+        try {
             mmsiNumeric = Integer.parseInt(binary.substring(8, 38), 2);
-        }
-        catch(NumberFormatException nfe){
+        } catch (NumberFormatException nfe) {
             LOG.warn("mmsi is not numeric", nfe);
         }
         String mmsi = String.valueOf(mmsiNumeric);
@@ -150,16 +123,15 @@ public class AisParser {
         movement.setFlagState(ansi3);
         return movement;
     }
- 
+
     public static AssetDTO parseReportType5(String binary) {
         ReceiveAssetInformationRequest req = new ReceiveAssetInformationRequest();
         req.setMethod(ExchangeModuleMethod.RECEIVE_ASSET_INFORMATION);
 
         Integer mmsiNumeric = Integer.MIN_VALUE;
-        try{
+        try {
             mmsiNumeric = Integer.parseInt(binary.substring(8, 38), 2);
-        }
-        catch(NumberFormatException nfe){
+        } catch (NumberFormatException nfe) {
             LOG.warn("mmsi is not numeric", nfe);
         }
         String mmsi = String.valueOf(mmsiNumeric);
@@ -180,7 +152,7 @@ public class AisParser {
         assetDTO.setUpdatedBy("AIS Message Type 5");
         return assetDTO;
     }
-    
+
     public static MovementBaseType parseReportType18(String binary, Instant lesTimestamp) {
 
         if (binary == null || binary.trim().length() < 1) {
@@ -191,10 +163,9 @@ public class AisParser {
         movement.setStatus(messageType.toString());
         // mmsi
         Integer mmsiNumeric = Integer.MIN_VALUE;
-        try{
+        try {
             mmsiNumeric = Integer.parseInt(binary.substring(8, 38), 2);
-        }
-        catch(NumberFormatException nfe){
+        } catch (NumberFormatException nfe) {
             LOG.warn("mmsi is not numeric", nfe);
         }
         String mmsi = String.valueOf(mmsiNumeric);
@@ -233,7 +204,7 @@ public class AisParser {
         movement.setFlagState(ansi3);
         return movement;
     }
-    
+
     public static AssetDTO parseReportType24(String binary) {
 
         if (binary == null || binary.trim().length() < 1) {
@@ -255,7 +226,7 @@ public class AisParser {
         if (partNumber.equals(0)) {
             vesselName = Conversion.getAsciiStringFromBinaryString(binary.substring(40, 160));
         } else if (partNumber.equals(1)) {
-            shipType = Integer.parseInt(binary.substring(40,48), 2);
+            shipType = Integer.parseInt(binary.substring(40, 48), 2);
             ircs = Conversion.getAsciiStringFromBinaryString(binary.substring(90, 132));
             ansi3 = getAnsi3FromMMSI(mmsi);
         }
@@ -264,7 +235,7 @@ public class AisParser {
         assetDTO.setMmsi(mmsi);
         assetDTO.setName(vesselName);
         assetDTO.setIrcs(ircs);
-        if(shipType != null) {
+        if (shipType != null) {
             assetDTO.setVesselType(Conversion.getShiptypeForCode(shipType));
         }
         assetDTO.setFlagStateCode(ansi3);
@@ -272,10 +243,10 @@ public class AisParser {
         return assetDTO;
 
     }
-    
-    private static String getAnsi3FromMMSI(String mmsi){
+
+    private static String getAnsi3FromMMSI(String mmsi) {
         String ansi3 = "ERR";
-        if(mmsi != null && mmsi.length() >= 3) {
+        if (mmsi != null && mmsi.length() >= 3) {
             String cc = mmsi.substring(0, 3);
             ansi3 = Conversion.getAnsi3ForCountryCode(cc);
             if ("ERR".equals(ansi3)) {
@@ -293,7 +264,7 @@ public class AisParser {
                 i -= (1L << byteString.length());
             }
             return (i.doubleValue() / 10000 / 60);
-        }catch(NumberFormatException nfe){
+        } catch (NumberFormatException nfe) {
             return null;
         }
     }
@@ -303,10 +274,9 @@ public class AisParser {
         return i.doubleValue() / 10;
     }
 
-
     private static Double parseSpeedOverGround(String s, int stringStart, int stringEnd) {
         Integer speedOverGround = Integer.parseInt(s.substring(stringStart, stringEnd), 2);
-        if(speedOverGround == AIS_SPEED_ERROR_CODE){
+        if (speedOverGround == AIS_SPEED_ERROR_CODE) {
             return null;
         }
         return speedOverGround.doubleValue() / 10;
@@ -363,6 +333,34 @@ public class AisParser {
         } catch (NumberFormatException | IndexOutOfBoundsException e) {
             LOG.error(fieldName + " parsing error", e);
             throw e;
+        }
+    }
+
+    public enum AisType {
+        TYPE1(Type.POSITION),
+        TYPE2(Type.POSITION),
+        TYPE3(Type.POSITION),
+        TYPE5(Type.STATIC),
+        TYPE18(Type.POSITION),
+        TYPE24(Type.STATIC),
+        UNKNOWN(null);
+
+        private Type type;
+
+        private AisType(Type type) {
+            this.type = type;
+        }
+
+        public boolean isPositionReport() {
+            return Type.POSITION.equals(type);
+        }
+
+        public boolean isStaticReport() {
+            return Type.STATIC.equals(type);
+        }
+
+        private enum Type {
+            POSITION, STATIC;
         }
     }
 }

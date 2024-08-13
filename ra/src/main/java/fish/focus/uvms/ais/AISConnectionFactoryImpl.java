@@ -32,92 +32,95 @@ copy of the GNU General Public License along with the IFDM Suite. If not, see <h
  */
 package fish.focus.uvms.ais;
 
-import java.util.logging.Logger;
-
 import javax.naming.NamingException;
 import javax.naming.Reference;
-
 import javax.resource.ResourceException;
 import javax.resource.spi.ConnectionManager;
+import java.util.logging.Logger;
 
 /**
  * AISConnectionFactoryImpl
  *
  * @version $Revision: $
  */
-public class AISConnectionFactoryImpl implements AISConnectionFactory
-{
-   /** The serial version UID */
-   private static final long serialVersionUID = 1L;
+public class AISConnectionFactoryImpl implements AISConnectionFactory {
+    /**
+     * The serial version UID
+     */
+    private static final long serialVersionUID = 1L;
 
-   /** The logger */
-   private static Logger log = Logger.getLogger(AISConnectionFactoryImpl.class.getName());
+    /**
+     * The logger
+     */
+    private static Logger log = Logger.getLogger(AISConnectionFactoryImpl.class.getName());
 
-   /** Reference */
-   private Reference reference;
+    /**
+     * Reference
+     */
+    private Reference reference;
 
-   /** ManagedConnectionFactory */
-   private AISManagedConnectionFactory mcf;
+    /**
+     * ManagedConnectionFactory
+     */
+    private AISManagedConnectionFactory mcf;
 
-   /** ConnectionManager */
-   private ConnectionManager connectionManager;
+    /**
+     * ConnectionManager
+     */
+    private ConnectionManager connectionManager;
 
-   /**
-    * Default constructor
-    */
-   public AISConnectionFactoryImpl()
-   {
+    /**
+     * Default constructor
+     */
+    public AISConnectionFactoryImpl() {
 
-   }
+    }
 
-   /**
-    * Default constructor
-    * @param mcf ManagedConnectionFactory
-    * @param cxManager ConnectionManager
-    */
-   public AISConnectionFactoryImpl(AISManagedConnectionFactory mcf, ConnectionManager cxManager)
-   {
-      this.mcf = mcf;
-      this.connectionManager = cxManager;
-   }
+    /**
+     * Default constructor
+     *
+     * @param mcf       ManagedConnectionFactory
+     * @param cxManager ConnectionManager
+     */
+    public AISConnectionFactoryImpl(AISManagedConnectionFactory mcf, ConnectionManager cxManager) {
+        this.mcf = mcf;
+        this.connectionManager = cxManager;
+    }
 
-   /** 
-    * Get connection from factory
-    *
-    * @return AISConnection instance
-    * @exception ResourceException Thrown if a connection can't be obtained
-    */
-   @Override
-   public AISConnection getConnection() throws ResourceException
-   {
-      log.finest("getConnection()");
-      return (AISConnection)connectionManager.allocateConnection(mcf, null);
-   }
+    /**
+     * Get connection from factory
+     *
+     * @return AISConnection instance
+     * @throws ResourceException Thrown if a connection can't be obtained
+     */
+    @Override
+    public AISConnection getConnection() throws ResourceException {
+        log.finest("getConnection()");
+        return (AISConnection) connectionManager.allocateConnection(mcf, null);
+    }
 
-   /**
-    * Get the Reference instance.
-    *
-    * @return Reference instance
-    * @exception NamingException Thrown if a reference can't be obtained
-    */
-   @Override
-   public Reference getReference() throws NamingException
-   {
-      log.finest("getReference()");
-      return reference;
-   }
+    /**
+     * Get the Reference instance.
+     *
+     * @return Reference instance
+     * @throws NamingException Thrown if a reference can't be obtained
+     */
+    @Override
+    public Reference getReference() throws NamingException {
+        log.finest("getReference()");
+        return reference;
+    }
 
-   /**
-    * Set the Reference instance.
-    *
-    * @param reference A Reference instance
-    */
-   @Override
-   public void setReference(Reference reference)
-   {
-      log.finest("setReference()");
-      this.reference = reference;
-   }
+    /**
+     * Set the Reference instance.
+     *
+     * @param reference A Reference instance
+     */
+    @Override
+    public void setReference(Reference reference) {
+        log.finest("setReference()");
+        this.reference = reference;
+    }
 
 
 }

@@ -22,19 +22,20 @@
  */
 -->
 
-<ironjacamar xmlns="http://www.ironjacamar.org/doc/schema"
-             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<ironjacamar xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns="http://www.ironjacamar.org/doc/schema"
              xsi:schemaLocation="http://www.ironjacamar.org/doc/schema 
              http://www.ironjacamar.org/doc/schema/ironjacamar_1_1.xsd">
-  <config-property name="address"></config-property>
-  <config-property name="port">0</config-property>
+    <config-property name="address"></config-property>
+    <config-property name="port">0</config-property>
 
-  <transaction-support>NoTransaction</transaction-support>
-  
-  <connection-definitions>
-    <connection-definition class-name="fish.focus.uvms.ais.AISManagedConnectionFactory" jndi-name="java:/eis/AISConnectionFactory" pool-name="AISConnectionFactory">
-    </connection-definition>
-  </connection-definitions>
+    <transaction-support>NoTransaction</transaction-support>
+
+    <connection-definitions>
+        <connection-definition class-name="fish.focus.uvms.ais.AISManagedConnectionFactory"
+                               jndi-name="java:/eis/AISConnectionFactory" pool-name="AISConnectionFactory">
+        </connection-definition>
+    </connection-definitions>
 
 
 </ironjacamar>

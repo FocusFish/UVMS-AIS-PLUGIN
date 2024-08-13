@@ -12,26 +12,26 @@ copy of the GNU General Public License along with the IFDM Suite. If not, see <h
 package fish.focus.uvms.plugins.ais.constants;
 
 public enum AisField {
-	ID(0),
-	REPEAT_INDICATOR(1),
-	MMSI(2),
-	NAVIGATIONAL_STATUS(3),
-	RATE_OF_TURN(4),
-	SPEED_OVER_GROUND(5),
-	POSITION_ACCURACY(6),
-	LONGITUDE(7),
-	LATITUDE(8),
-	COURSE_OVER_GROUND(9),
-	TRUE_HEADING(10),
-	UTC_SECOND(11);
+    ID(0),
+    REPEAT_INDICATOR(1),
+    MMSI(2),
+    NAVIGATIONAL_STATUS(3),
+    RATE_OF_TURN(4),
+    SPEED_OVER_GROUND(5),
+    POSITION_ACCURACY(6),
+    LONGITUDE(7),
+    LATITUDE(8),
+    COURSE_OVER_GROUND(9),
+    TRUE_HEADING(10),
+    UTC_SECOND(11);
 
-	private int index;
+    private int index;
 
-	private AisField(int index) {
-		this.index = index;
-	}
+    private AisField(int index) {
+        this.index = index;
+    }
 
-	public int getIndex() {
-		return this.index;
-	}
+    public int getIndex() {
+        return this.index;
+    }
 }

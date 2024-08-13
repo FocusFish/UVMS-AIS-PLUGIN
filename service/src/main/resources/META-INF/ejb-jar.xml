@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ejb-jar xmlns = "http://java.sun.com/xml/ns/javaee" 
-         version = "3.1"
-         xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance" 
-         xsi:schemaLocation = "http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/ejb-jar_3_1.xsd">
-    
+<ejb-jar xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://java.sun.com/xml/ns/javaee"
+         version="3.1"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/ejb-jar_3_1.xsd">
+
     <enterprise-beans>
         <message-driven>
             <ejb-name>PluginNameEventBusListener</ejb-name>
@@ -19,7 +19,8 @@
                 </activation-config-property>
                 <activation-config-property>
                     <activation-config-property-name>messageSelector</activation-config-property-name>
-                    <activation-config-property-value>ServiceName='${application.groupid}'</activation-config-property-value>
+                    <activation-config-property-value>ServiceName='${application.groupid}'
+                    </activation-config-property-value>
                 </activation-config-property>
             </activation-config>
         </message-driven>
@@ -29,18 +30,22 @@
             <activation-config>
                 <activation-config-property>
                     <activation-config-property-name>subscriptionName</activation-config-property-name>
-                    <activation-config-property-value>${application.groupid}${application.responseTopicName}</activation-config-property-value>
+                    <activation-config-property-value>${application.groupid}${application.responseTopicName}
+                    </activation-config-property-value>
                 </activation-config-property>
                 <activation-config-property>
                     <activation-config-property-name>clientId</activation-config-property-name>
-                    <activation-config-property-value>${application.groupid}${application.responseTopicName}</activation-config-property-value>
+                    <activation-config-property-value>${application.groupid}${application.responseTopicName}
+                    </activation-config-property-value>
                 </activation-config-property>
                 <activation-config-property>
                     <activation-config-property-name>messageSelector</activation-config-property-name>
-                    <activation-config-property-value>ServiceName='${application.groupid}${application.responseTopicName}'</activation-config-property-value>
+                    <activation-config-property-value>
+                        ServiceName='${application.groupid}${application.responseTopicName}'
+                    </activation-config-property-value>
                 </activation-config-property>
             </activation-config>
         </message-driven>
     </enterprise-beans>
-    
+
 </ejb-jar>
