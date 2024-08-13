@@ -9,7 +9,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -24,7 +24,7 @@ public class DownsamplingFishingServiceTest {
     private ArgumentCaptor<Collection<MovementBaseType>> captorMovements;
 
     @Test
-    public void sendDownSampledFishingVesselMovementsTest() throws InterruptedException {
+    public void sendDownSampledFishingVesselMovementsTest() {
         assertThat(downsamplingFishingService.getDownSampledFishingVesselMovements().size(), is(0));
         MovementBaseType movementBaseType = new MovementBaseType();
         movementBaseType.setMmsi("123456789");
@@ -35,5 +35,4 @@ public class DownsamplingFishingServiceTest {
         verify(exchangeService, Mockito.times(1)).sendMovements(captorMovements.capture());
         assertThat(captorMovements.getValue().size(), is(1));
     }
-
 }

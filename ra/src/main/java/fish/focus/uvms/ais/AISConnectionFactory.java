@@ -32,24 +32,22 @@ copy of the GNU General Public License along with the IFDM Suite. If not, see <h
  */
 package fish.focus.uvms.ais;
 
-import java.io.Serializable;
-
 import javax.resource.Referenceable;
 import javax.resource.ResourceException;
+import java.io.Serializable;
 
 /**
  * AISConnectionFactory
  *
  * @version $Revision: $
  */
-public interface AISConnectionFactory extends Serializable, Referenceable
-{
-   /** 
-    * Get connection from factory
-    *
-    * @return AISConnection instance
-    * @exception ResourceException Thrown if a connection can't be obtained
-    */
-   public AISConnection getConnection() throws ResourceException;
+public interface AISConnectionFactory extends Serializable, Referenceable {
+    /**
+     * Get connection from factory
+     *
+     * @return AISConnection instance
+     * @throws ResourceException Thrown if a connection can't be obtained
+     */
+    public AISConnection getConnection() throws ResourceException;
 
 }

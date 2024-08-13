@@ -20,7 +20,7 @@ public class DownsamplingAssetService {
 
     private Map<String, AssetDTO> downSampledAssetInfo = new HashMap<>();
 
-    @Schedule(minute = "6", hour = "*", persistent = false )
+    @Schedule(minute = "6", hour = "*", persistent = false)
     public void sendAssetUpdates() {
         if (!startUp.isEnabled()) {
             return;
@@ -29,7 +29,7 @@ public class DownsamplingAssetService {
         downSampledAssetInfo.clear();
     }
 
-    public Map<String, AssetDTO> getStoredAssetInfo(){
+    public Map<String, AssetDTO> getStoredAssetInfo() {
         return downSampledAssetInfo;
     }
 

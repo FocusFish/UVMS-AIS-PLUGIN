@@ -20,7 +20,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /*
  * Test data taken from https://fossies.org/linux/gpsd/test/sample.aivdm
@@ -39,7 +39,7 @@ public class ProcessServiceTest {
 
     @InjectMocks
     private ProcessService processService;
-    
+
     @Captor
     private ArgumentCaptor<List<MovementBaseType>> captor;
 
@@ -61,7 +61,7 @@ public class ProcessServiceTest {
         assertThat(movement.getPosition().getLongitude(), is(-123.39538333333333));
         assertThat(movement.getTrueHeading(), is(215));
         assertThat(movement.getReportedSpeed(), is(12.3));
-        assertThat(movement.getAisPositionAccuracy(), is((short)1));
+        assertThat(movement.getAisPositionAccuracy(), is((short) 1));
         int positionSecond = movement.getPositionTime().toInstant().atZone(ZoneOffset.UTC).getSecond();
         assertThat(positionSecond, is(33));
     }
@@ -97,11 +97,11 @@ public class ProcessServiceTest {
         assertThat(movement.getPosition().getLongitude(), is(-71.62614333333333333333333333));
         assertThat(movement.getTrueHeading(), is(91));
         assertThat(movement.getReportedSpeed(), is(13.9));
-        assertThat(movement.getAisPositionAccuracy(), is((short)0));
+        assertThat(movement.getAisPositionAccuracy(), is((short) 0));
         int positionSecond = movement.getPositionTime().toInstant().atZone(ZoneOffset.UTC).getSecond();
         assertThat(positionSecond, is(41));
     }
-    
+
     @Test
     public void aisType3Test() {
         ProcessResult result = processService.processMessages(Arrays.asList(getAisType3Message()), new HashSet<>());
@@ -113,11 +113,11 @@ public class ProcessServiceTest {
         assertThat(movement.getPosition().getLongitude(), is(-76.32753333333333333333333333));
         assertThat(movement.getTrueHeading(), is(352));
         assertThat(movement.getReportedSpeed(), is(0.0));
-        assertThat(movement.getAisPositionAccuracy(), is((short)1));
+        assertThat(movement.getAisPositionAccuracy(), is((short) 1));
         int positionSecond = movement.getPositionTime().toInstant().atZone(ZoneOffset.UTC).getSecond();
         assertThat(positionSecond, is(35));
     }
-    
+
     @Test
     public void positionTest() {
         ProcessResult result = processService.processMessages(Arrays.asList(getAisPositionMessage()), new HashSet<>());
@@ -128,7 +128,7 @@ public class ProcessServiceTest {
         assertThat(movement.getPosition().getLatitude(), is(57.490381666666664));
         assertThat(movement.getPosition().getLongitude(), is(10.685565));
     }
-	
+
 
     @Test
     public void positionType18Test() {
@@ -139,7 +139,7 @@ public class ProcessServiceTest {
         assertThat(movement.getFlagState(), is("USA"));
         assertThat(movement.getPosition().getLatitude(), is(40.68454));
         assertThat(movement.getPosition().getLongitude(), is(-74.07213166666666666666666667));
-        assertThat(movement.getAisPositionAccuracy(), is((short)0));
+        assertThat(movement.getAisPositionAccuracy(), is((short) 0));
     }
 
     @Test
@@ -170,7 +170,7 @@ public class ProcessServiceTest {
         assertThat(asset.getVesselType(), is("Cargo"));
         assertThat(asset.getIrcs(), is("3FOF8"));
     }
-    
+
     @Test
     public void fishingVesselTest() {
         String knownMmsi = "261061000";
@@ -180,7 +180,7 @@ public class ProcessServiceTest {
         String assetMmsi = fishingVessels.iterator().next();
         assertThat(assetMmsi, is(knownMmsi));
     }
-    
+
     @Test
     public void knownFishingVesselTest() {
         String knownMmsi = "219024194";
@@ -190,14 +190,14 @@ public class ProcessServiceTest {
         assertThat(result.getDownSampledFishingVesselMovements().size(), is(1));
         assertThat(result.getDownSampledFishingVesselMovements().get(knownMmsi).getMmsi(), is(knownMmsi));
     }
-    
+
     @Test
     public void notKnownFishingVesselTest() {
         Set<String> fishingVessels = new HashSet<>();
         ProcessResult result = processService.processMessages(Arrays.asList(getAisPositionMessage()), fishingVessels);
         assertThat(result.getDownSampledFishingVesselMovements().size(), is(0));
     }
-    
+
     @Test
     public void aisType24PartATest() {
         ProcessResult result = processService.processMessages(Arrays.asList(getAisType24PartAMessage()), new HashSet<>());
@@ -206,7 +206,7 @@ public class ProcessServiceTest {
         AssetDTO asset = assetMap.get("271041815");
         assertThat(asset.getName(), is("PROGUY"));
     }
-    
+
     @Test
     public void aisType24PartBTest() {
         ProcessResult result = processService.processMessages(Arrays.asList(getAisType24PartBMessage()), new HashSet<>());
@@ -215,7 +215,7 @@ public class ProcessServiceTest {
         AssetDTO asset = assetMap.get("271041815");
         assertThat(asset.getIrcs(), is("TC6163"));
     }
-    
+
     /*
     MessageID:          1
     RepeatIndicator:    0
@@ -237,7 +237,7 @@ public class ProcessServiceTest {
     private Sentence getAisType1Message() {
         return new Sentence(null, "15RTgt0PAso;90TKcjM8h6g208CQ,0*4A");
     }
-    
+
     /*
     MessageID:          2
     RepeatIndicator:    0
@@ -261,7 +261,7 @@ public class ProcessServiceTest {
     private Sentence getAisType2Message() {
         return new Sentence(null, "25Cjtd0Oj;Jp7ilG7=UkKBoB0<06");
     }
-    
+
     /*
     MessageID:          3
     RepeatIndicator:    0
@@ -285,6 +285,7 @@ public class ProcessServiceTest {
     private Sentence getAisType3Message() {
         return new Sentence(null, "38Id705000rRVJhE7cl9n;160000");
     }
+
     /*
     MessageID:        5
     RepeatIndicator:  0
@@ -311,7 +312,7 @@ public class ProcessServiceTest {
     private Sentence getAisType5Message() {
         return new Sentence(null, "55?MbV02;H;s<HtKR20EHE:0@T4@Dn2222222216L961O5Gf0NSQEp6ClRp8");
     }
-    
+
     /*
     MessageID:          18
     RepeatIndicator:    0
@@ -333,7 +334,7 @@ public class ProcessServiceTest {
     private Sentence getAisType18Message() {
         return new Sentence(null, "B52K>;h00Fc>jpUlNV@ikwpUoP06,0*4C");
     }
-    
+
     /*
     MessageID:         24
     RepeatIndicator:   0
@@ -344,7 +345,7 @@ public class ProcessServiceTest {
     private Sentence getAisType24PartAMessage() {
         return new Sentence(null, "H42O55i18tMET00000000000000,2*6D");
     }
-    
+
     /*
     MessageID:         24
     RepeatIndicator:   0
@@ -361,7 +362,7 @@ public class ProcessServiceTest {
     private Sentence getAisType24PartBMessage() {
         return new Sentence(null, "H42O55lti4hhhilD3nink000?050,0*40");
     }
-    
+
     private Sentence getAisType5FishingVessel() {
         return new Sentence(null, "5CpuqR029m2U<pLP00084i@T<40000000000000N1HN814lf0<1i6CR@@PC52@ii6CR@@00");
     }

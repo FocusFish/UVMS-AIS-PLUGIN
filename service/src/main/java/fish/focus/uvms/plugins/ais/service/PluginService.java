@@ -11,39 +11,32 @@ copy of the GNU General Public License along with the IFDM Suite. If not, see <h
  */
 package fish.focus.uvms.plugins.ais.service;
 
-import javax.ejb.EJB;
-import javax.ejb.LocalBean;
-import javax.ejb.Stateless;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import fish.focus.schema.exchange.common.v1.AcknowledgeTypeType;
-import fish.focus.schema.exchange.common.v1.CommandType;
-import fish.focus.schema.exchange.common.v1.CommandTypeType;
-import fish.focus.schema.exchange.common.v1.KeyValueType;
-import fish.focus.schema.exchange.common.v1.ReportType;
-import fish.focus.schema.exchange.common.v1.ReportTypeType;
+import fish.focus.schema.exchange.common.v1.*;
 import fish.focus.schema.exchange.movement.v1.MovementPoint;
 import fish.focus.schema.exchange.movement.v1.MovementType;
 import fish.focus.schema.exchange.plugin.types.v1.EmailType;
 import fish.focus.schema.exchange.plugin.types.v1.PollType;
 import fish.focus.schema.exchange.service.v1.SettingListType;
 import fish.focus.uvms.plugins.ais.StartupBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.ejb.EJB;
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
 
 /**
+ *
  **/
 @LocalBean
 @Stateless
 public class PluginService {
 
+    private static final Logger LOG = LoggerFactory.getLogger(PluginService.class);
     @EJB
     StartupBean startupBean;
 
-    private static final Logger LOG = LoggerFactory.getLogger(PluginService.class);
-
     /**
-     *
      * @param report
      * @return
      */
@@ -62,7 +55,6 @@ public class PluginService {
     }
 
     /**
-     *
      * @param command
      * @return
      */
@@ -75,7 +67,7 @@ public class PluginService {
             LOG.info("POLL: {}", poll.getPollId());
         }
         if (email != null && CommandTypeType.EMAIL.equals(command.getCommand())) {
-            LOG.info("EMAIL: subject={}",email.getSubject());
+            LOG.info("EMAIL: subject={}", email.getSubject());
         }
         return AcknowledgeTypeType.OK;
     }

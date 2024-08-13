@@ -17,15 +17,13 @@ import java.util.Set;
 
 public class EventStreamListener implements MessageListener {
     private static final Logger LOG = LoggerFactory.getLogger(EventStreamListener.class);
-
+    Jsonb jsonb;
     @Inject
     private AisService aisService;
 
-    Jsonb jsonb;
-
     @PostConstruct
     public void init() {
-        jsonb =  new JsonBConfigurator().getContext(null);
+        jsonb = new JsonBConfigurator().getContext(null);
     }
 
     @Override

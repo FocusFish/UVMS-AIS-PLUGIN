@@ -27,25 +27,25 @@ import java.util.concurrent.ConcurrentMap;
 
 @Singleton
 public class DownsamplingService {
-    private static final Logger LOG= LoggerFactory.getLogger(DownsamplingService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DownsamplingService.class);
     private static final Logger LOG_SAVED_MOVEMENTS = LoggerFactory.getLogger("SAVED_MOVEMENTS");
-	
+
     @Inject
     private StartupBean startUp;
-    
+
     @Inject
     private ExchangeService exchangeService;
 
     private ConcurrentMap<String, MovementBaseType> downSampledMovements = new ConcurrentHashMap<>();
 
-    @Schedule(minute = "*/5", hour = "*", persistent = false )
+    @Schedule(minute = "*/5", hour = "*", persistent = false)
     public void handleDownSampledMovements() {
         if (downSampledMovements.isEmpty()) {
             return;
         }
-        boolean onlyAisFromFishingVessels="true".equalsIgnoreCase(startUp.getSetting("onlyAisFromFishingVessels"));
+        boolean onlyAisFromFishingVessels = "true".equalsIgnoreCase(startUp.getSetting("onlyAisFromFishingVessels"));
 
-        LOG.info ("Handle {} downSampledMovements, onlyAisFromFishingVessels:{}", downSampledMovements.size(),onlyAisFromFishingVessels);
+        LOG.info("Handle {} downSampledMovements, onlyAisFromFishingVessels:{}", downSampledMovements.size(), onlyAisFromFishingVessels);
 
         List<MovementBaseType> movements = new ArrayList<>(downSampledMovements.values());
         downSampledMovements.clear();

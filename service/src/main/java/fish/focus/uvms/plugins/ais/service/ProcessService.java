@@ -35,7 +35,7 @@ public class ProcessService {
 
     @Inject
     private StartupBean startUp;
-    
+
     @Inject
     private ExchangeService exchangeService;
 
@@ -68,10 +68,10 @@ public class ProcessService {
                     AssetDTO asset = AisParser.parseStaticReport(binary, aisType);
                     if (asset != null) {
                         downsampledAssets.put(asset.getMmsi(), asset);
-	                    addFishingVessels(asset, knownFishingVessels);
+                        addFishingVessels(asset, knownFishingVessels);
                     } else {
-			           LOG.error("Couldn't get asset from ais static report, ignoring it");
-					}
+                        LOG.error("Couldn't get asset from ais static report, ignoring it");
+                    }
                 }
             } catch (Exception e) {
                 exchangeService.sendToErrorQueueParsingError(sentence.getSentence());

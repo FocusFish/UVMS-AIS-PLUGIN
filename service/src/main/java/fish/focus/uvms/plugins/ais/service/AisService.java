@@ -11,37 +11,30 @@ copy of the GNU General Public License along with the IFDM Suite. If not, see <h
  */
 package fish.focus.uvms.plugins.ais.service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import fish.focus.schema.exchange.movement.v1.MovementBaseType;
+import fish.focus.uvms.ais.AISConnection;
+import fish.focus.uvms.ais.AISConnectionFactoryImpl;
+import fish.focus.uvms.ais.Sentence;
+import fish.focus.uvms.plugins.ais.StartupBean;
+import org.eclipse.microprofile.metrics.MetricUnits;
+import org.eclipse.microprofile.metrics.annotation.Gauge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
-import javax.ejb.DependsOn;
-import javax.ejb.EJB;
-import javax.ejb.Schedule;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
 import javax.ejb.Timer;
+import javax.ejb.*;
 import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.inject.Inject;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.resource.ResourceException;
-import org.eclipse.microprofile.metrics.MetricUnits;
-import org.eclipse.microprofile.metrics.annotation.Gauge;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import fish.focus.schema.exchange.movement.v1.MovementBaseType;
-import fish.focus.uvms.ais.AISConnection;
-import fish.focus.uvms.ais.AISConnectionFactoryImpl;
-import fish.focus.uvms.ais.Sentence;
-import fish.focus.uvms.plugins.ais.StartupBean;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 @Startup
@@ -57,7 +50,7 @@ public class AisService {
 
     @EJB
     ProcessService processService;
-    
+
     @Inject
     private DownsamplingService downsamplingService;
 
@@ -69,7 +62,7 @@ public class AisService {
 
     @Inject
     private ExchangeService exchangeService;
-    
+
     @Resource
     private ManagedExecutorService executorService;
 
@@ -147,10 +140,10 @@ public class AisService {
             List<Sentence> sentences = connection.getSentences();
             CompletableFuture<Void> process = CompletableFuture.supplyAsync(() -> processService.processMessages(sentences, knownFishingVessels), executorService)
                     .thenAccept(result -> {
-                        downsamplingService.getDownSampledMovements().putAll(result.getDownsampledMovements());
-                        downsamplingAssetService.getStoredAssetInfo().putAll(result.getDownsampledAssets());
-                        downsamplingFishingService.getDownSampledFishingVesselMovements().putAll(result.getDownSampledFishingVesselMovements());
-                        }
+                                downsamplingService.getDownSampledMovements().putAll(result.getDownsampledMovements());
+                                downsamplingAssetService.getStoredAssetInfo().putAll(result.getDownsampledAssets());
+                                downsamplingFishingService.getDownSampledFishingVesselMovements().putAll(result.getDownSampledFishingVesselMovements());
+                            }
                     );
             processes.add(process);
             LOG.info("Got {} sentences from AIS RA. Currently running {} parallel threads", sentences.size(), processes.size());
@@ -184,7 +177,7 @@ public class AisService {
         return tmp;
     }
 
-    public Set<String> getKnownFishingVessels(){
+    public Set<String> getKnownFishingVessels() {
         return knownFishingVessels;
     }
 

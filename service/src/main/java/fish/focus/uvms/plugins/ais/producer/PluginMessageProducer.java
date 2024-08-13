@@ -24,17 +24,13 @@ import javax.jms.*;
 @LocalBean
 public class PluginMessageProducer {
 
+    private static final Logger LOG = LoggerFactory.getLogger(PluginMessageProducer.class);
     @Resource(mappedName = "java:/" + ExchangeModelConstants.EXCHANGE_MESSAGE_IN_QUEUE)
     private Queue exchangeQueue;
-
     @Resource(mappedName = "java:/" + ExchangeModelConstants.PLUGIN_EVENTBUS)
     private Topic eventBus;
-
     @Resource(mappedName = "java:/ConnectionFactory")
     private ConnectionFactory connectionFactory;
-
-
-    private static final Logger LOG = LoggerFactory.getLogger(PluginMessageProducer.class);
 
     public void sendResponseMessage(String text, TextMessage requestMessage) throws JMSException {
 
@@ -51,7 +47,7 @@ public class PluginMessageProducer {
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
             producer.send(message);
         } catch (JMSException e) {
-            LOG.error(e.toString(),e);
+            LOG.error(e.toString(), e);
             throw e;
         }
     }
@@ -69,7 +65,7 @@ public class PluginMessageProducer {
             producer.send(message);
             return message.getJMSMessageID();
         } catch (JMSException e) {
-            LOG.error(e.toString(),e);
+            LOG.error(e.toString(), e);
             throw e;
         }
     }
