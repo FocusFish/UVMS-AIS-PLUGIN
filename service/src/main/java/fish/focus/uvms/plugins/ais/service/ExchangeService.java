@@ -18,41 +18,40 @@ import fish.focus.schema.exchange.plugin.types.v1.PluginType;
 import fish.focus.uvms.asset.client.model.AssetDTO;
 import fish.focus.uvms.exchange.model.mapper.ExchangeModuleRequestMapper;
 import fish.focus.uvms.plugins.ais.StartupBean;
-import org.eclipse.microprofile.metrics.Counter;
-import org.eclipse.microprofile.metrics.annotation.Metric;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Resource;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import javax.jms.Queue;
 import javax.jms.*;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
 import java.time.Instant;
-import java.util.Collection;
-import java.util.Date;
+import java.util.*;
 
 @Stateless
 public class ExchangeService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExchangeService.class);
+
     private static final String NOP = "//NOP: {}";
     private static final String COULD_NOT_SEND_MOVEMENT = "couldn't send movement";
+
     private final Jsonb jsonb = JsonbBuilder.create();
+
     @Resource(mappedName = "java:/ConnectionFactory")
     private ConnectionFactory connectionFactory;
+
     @Resource(mappedName = "java:/jms/queue/UVMSExchangeEvent")
     private Queue exchangeQueue;
+
     @Resource(mappedName = "java:/jms/queue/UVMSPluginFailedReport")
     private Queue errorQueue;
-    @Inject
-    private AisService aisService;
+
     @Inject
     private StartupBean startupBean;
-    @Inject
-    @Metric(name = "ais_incoming", absolute = true)
-    private Counter aisIncoming;
 
     private static void sendToErrorQueue(String movement, Session session, MessageProducer producer) {
         try {
@@ -105,8 +104,9 @@ public class ExchangeService {
         }
     }
 
-    public void sendMovements(Collection<MovementBaseType> movements) {
+    public List<MovementBaseType> sendMovements(Collection<MovementBaseType> movements) {
         LOG.info("Sending {} positions to exchange", movements.size());
+        List<MovementBaseType> failedToSendMovements = new ArrayList<>();
         try (Connection connection = connectionFactory.createConnection();
              Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
              MessageProducer producer = session.createProducer(exchangeQueue)
@@ -114,16 +114,17 @@ public class ExchangeService {
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
             // emit
             for (MovementBaseType movement : movements) {
-                sendMovement(session, producer, movement);
+                var failedToSendMovement = sendMovement(session, producer, movement);
+                failedToSendMovement.ifPresent(failedToSendMovements::add);
             }
         } catch (JMSException e) {
             LOG.error(COULD_NOT_SEND_MOVEMENT);
         }
+        return failedToSendMovements;
     }
 
-    private void sendMovement(Session session, MessageProducer producer, MovementBaseType movement) {
+    private Optional<MovementBaseType> sendMovement(Session session, MessageProducer producer, MovementBaseType movement) {
         try {
-
             SetReportMovementType movementReport = getMovementReport(movement, startupBean.getRegisterClassName());
             String text = ExchangeModuleRequestMapper.createSetMovementReportRequest(movementReport, "AIS", null, Instant.now(), PluginType.OTHER, "AIS", null);
             TextMessage message = session.createTextMessage();
@@ -137,16 +138,16 @@ public class ExchangeService {
             }
 
             producer.send(message);
-            aisIncoming.inc();
+            startupBean.incrementAisIncoming();
         } catch (RuntimeException e) {
             LOG.error("Couldn't map movement to setreportmovementtype");
             sendToErrorQueueParsingError(movement.toString());
         } catch (JMSException e) {
-            // save it and try again in a scheduled thread
-            aisService.addCachedMovement(movement);
+            return Optional.of(movement);
         } catch (Exception e) {
             LOG.info(NOP, e.getLocalizedMessage());
         }
+        return Optional.empty();
     }
 
     public void sendToErrorQueueParsingError(String movement) {
@@ -154,8 +155,6 @@ public class ExchangeService {
              Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
              MessageProducer producer = session.createProducer(errorQueue)) {
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
-
-            // emit
 
             sendToErrorQueue(movement, session, producer);
         } catch (JMSException e) {

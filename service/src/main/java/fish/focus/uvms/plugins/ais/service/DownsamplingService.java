@@ -30,13 +30,16 @@ public class DownsamplingService {
     private static final Logger LOG = LoggerFactory.getLogger(DownsamplingService.class);
     private static final Logger LOG_SAVED_MOVEMENTS = LoggerFactory.getLogger("SAVED_MOVEMENTS");
 
+    private final ConcurrentMap<String, MovementBaseType> downSampledMovements = new ConcurrentHashMap<>();
+
     @Inject
     private StartupBean startUp;
 
     @Inject
     private ExchangeService exchangeService;
 
-    private ConcurrentMap<String, MovementBaseType> downSampledMovements = new ConcurrentHashMap<>();
+    @Inject
+    private FailedMovementsService failedMovementsService;
 
     @Schedule(minute = "*/5", hour = "*", persistent = false)
     public void handleDownSampledMovements() {
@@ -56,12 +59,12 @@ public class DownsamplingService {
             LOG_SAVED_MOVEMENTS.info("#### END logged {} downSampledMovements ####", movements.size());
 
         } else {
-            exchangeService.sendMovements(movements);
+            List<MovementBaseType> failedToSendMovements = exchangeService.sendMovements(movements);
+            failedMovementsService.add(failedToSendMovements);
         }
     }
 
     public Map<String, MovementBaseType> getDownSampledMovements() {
         return downSampledMovements;
     }
-
 }
