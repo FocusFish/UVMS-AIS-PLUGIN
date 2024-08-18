@@ -11,37 +11,28 @@ copy of the GNU General Public License along with the IFDM Suite. If not, see <h
  */
 package fish.focus.uvms.plugins.ais.service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import fish.focus.uvms.ais.AISConnection;
+import fish.focus.uvms.ais.AISConnectionFactoryImpl;
+import fish.focus.uvms.ais.Sentence;
+import fish.focus.uvms.plugins.ais.StartupBean;
+import org.eclipse.microprofile.metrics.MetricUnits;
+import org.eclipse.microprofile.metrics.annotation.Gauge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
-import javax.ejb.DependsOn;
-import javax.ejb.EJB;
-import javax.ejb.Schedule;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-import javax.ejb.Timer;
+import javax.ejb.*;
 import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.inject.Inject;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.resource.ResourceException;
-import org.eclipse.microprofile.metrics.MetricUnits;
-import org.eclipse.microprofile.metrics.annotation.Gauge;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import fish.focus.schema.exchange.movement.v1.MovementBaseType;
-import fish.focus.uvms.ais.AISConnection;
-import fish.focus.uvms.ais.AISConnectionFactoryImpl;
-import fish.focus.uvms.ais.Sentence;
-import fish.focus.uvms.plugins.ais.StartupBean;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 @Startup
@@ -50,14 +41,18 @@ public class AisService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AisService.class);
 
+    private final List<CompletableFuture<Void>> processes = new ArrayList<>();
+    private final Set<String> knownFishingVessels = new HashSet<>();
+
     @Inject
     StartupBean startUp;
 
-    AISConnection connection;
+    @Inject
+    private FailedMovementsService failedMovementsService;
 
     @EJB
-    ProcessService processService;
-    
+    private ProcessService processService;
+
     @Inject
     private DownsamplingService downsamplingService;
 
@@ -67,16 +62,10 @@ public class AisService {
     @Inject
     private DownsamplingAssetService downsamplingAssetService;
 
-    @Inject
-    private ExchangeService exchangeService;
-    
     @Resource
     private ManagedExecutorService executorService;
 
-    private List<CompletableFuture<Void>> processes = new ArrayList<>();
-
-    private List<MovementBaseType> failedSendList = new ArrayList<>();
-    private Set<String> knownFishingVessels = new HashSet<>();
+    private AISConnection connection;
 
     @PostConstruct
     public void init() {
@@ -84,7 +73,7 @@ public class AisService {
             Context ctx = new InitialContext();
             AISConnectionFactoryImpl factory = (AISConnectionFactoryImpl) ctx.lookup("java:/eis/AISConnectionFactory");
             if (factory != null) {
-                LOG.debug("Factory lookup done! {}, {}", factory.toString(), factory.getClass());
+                LOG.debug("Factory lookup done! {}, {}", factory, factory.getClass());
                 connection = factory.getConnection();
 
                 if (startUp.isEnabled() && connection != null && !connection.isOpen()) {
@@ -147,44 +136,17 @@ public class AisService {
             List<Sentence> sentences = connection.getSentences();
             CompletableFuture<Void> process = CompletableFuture.supplyAsync(() -> processService.processMessages(sentences, knownFishingVessels), executorService)
                     .thenAccept(result -> {
-                        downsamplingService.getDownSampledMovements().putAll(result.getDownsampledMovements());
-                        downsamplingAssetService.getStoredAssetInfo().putAll(result.getDownsampledAssets());
-                        downsamplingFishingService.getDownSampledFishingVesselMovements().putAll(result.getDownSampledFishingVesselMovements());
-                        }
+                                downsamplingService.getDownSampledMovements().putAll(result.getDownsampledMovements());
+                                downsamplingAssetService.getStoredAssetInfo().putAll(result.getDownsampledAssets());
+                                downsamplingFishingService.getDownSampledFishingVesselMovements().putAll(result.getDownSampledFishingVesselMovements());
+                            }
                     );
             processes.add(process);
             LOG.info("Got {} sentences from AIS RA. Currently running {} parallel threads", sentences.size(), processes.size());
         }
     }
 
-    @Schedule(minute = "*/15", hour = "*", persistent = false)
-    public void resend(Timer timer) {
-        try {
-            if (startUp.isRegistered()) {
-                List<MovementBaseType> list = getAndClearFailedMovementList();
-                exchangeService.sendMovements(list);
-            }
-        } catch (Exception e) {
-            LOG.error(e.toString(), e);
-        }
-    }
-
-    public void addCachedMovement(MovementBaseType movementBaseType) {
-        synchronized (failedSendList) {
-            failedSendList.add(movementBaseType);
-        }
-    }
-
-    public List<MovementBaseType> getAndClearFailedMovementList() {
-        List<MovementBaseType> tmp = new ArrayList<>();
-        synchronized (failedSendList) {
-            tmp.addAll(failedSendList);
-            failedSendList.clear();
-        }
-        return tmp;
-    }
-
-    public Set<String> getKnownFishingVessels(){
+    public Set<String> getKnownFishingVessels() {
         return knownFishingVessels;
     }
 

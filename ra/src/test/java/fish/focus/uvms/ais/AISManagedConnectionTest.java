@@ -1,10 +1,6 @@
 package fish.focus.uvms.ais;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.Test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,7 +8,11 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.Test;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class AISManagedConnectionTest {
 

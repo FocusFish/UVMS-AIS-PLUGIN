@@ -17,20 +17,21 @@ import fish.focus.schema.exchange.registry.v1.UnregisterServiceResponse;
 import fish.focus.uvms.exchange.model.constant.ExchangeModelConstants;
 import fish.focus.uvms.exchange.model.mapper.JAXBMarshaller;
 import fish.focus.uvms.plugins.ais.StartupBean;
-import fish.focus.uvms.plugins.ais.service.PluginService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ejb.*;
+import javax.ejb.ActivationConfigProperty;
+import javax.ejb.EJB;
+import javax.ejb.MessageDriven;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.TextMessage;
 
 @MessageDriven(mappedName = ExchangeModelConstants.PLUGIN_EVENTBUS, activationConfig = {
-    @ActivationConfigProperty(propertyName = "subscriptionDurability", propertyValue = "Durable"),
-    @ActivationConfigProperty(propertyName = "destinationType", propertyValue = ExchangeModelConstants.DESTINATION_TYPE_TOPIC),
-    @ActivationConfigProperty(propertyName = "destinationLookup", propertyValue = ExchangeModelConstants.PLUGIN_EVENTBUS)
+        @ActivationConfigProperty(propertyName = "subscriptionDurability", propertyValue = "Durable"),
+        @ActivationConfigProperty(propertyName = "destinationType", propertyValue = ExchangeModelConstants.DESTINATION_TYPE_TOPIC),
+        @ActivationConfigProperty(propertyName = "destinationLookup", propertyValue = ExchangeModelConstants.PLUGIN_EVENTBUS)
 })
 public class PluginAckEventBusListener implements MessageListener {
 
@@ -38,9 +39,6 @@ public class PluginAckEventBusListener implements MessageListener {
 
     @EJB
     StartupBean startupService;
-
-    @EJB
-    PluginService aisService;
 
     @Override
     public void onMessage(Message inMessage) {
@@ -70,7 +68,7 @@ public class PluginAckEventBusListener implements MessageListener {
                                 startupService.setRegistered(Boolean.FALSE);
                                 break;
                             default:
-                                LOG.error("[ Type not supperted: {}]", request.getMethod());
+                                LOG.error("[ Type not supported: {}]", request.getMethod());
                         }
                         break;
                     case UNREGISTER_SERVICE:

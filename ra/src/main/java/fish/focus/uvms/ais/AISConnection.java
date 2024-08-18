@@ -39,24 +39,23 @@ import java.util.List;
  *
  * @version $Revision: $
  */
-public interface AISConnection
-{
-   /**
-    * Call me
-    */
-   public void callMe();
+public interface AISConnection {
+    /**
+     * Call me
+     */
+    public void callMe();
 
-   public boolean isOpen();
+    public boolean isOpen();
 
-   public void open(String host, Integer port, String userName, String password);
+    public void open(String host, Integer port, String userName, String password);
 
-   public List<Sentence> getSentences();
+    public List<Sentence> getSentences();
 
-   public long getQueueSize();
+    public long getQueueSize();
 
 
-   /**
-    * Close
-    */
-   public void close();
+    /**
+     * Close
+     */
+    public void close();
 }

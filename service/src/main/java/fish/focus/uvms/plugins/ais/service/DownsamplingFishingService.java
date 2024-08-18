@@ -15,26 +15,29 @@ import java.util.concurrent.ConcurrentMap;
 
 @Singleton
 public class DownsamplingFishingService {
-    private static final Logger LOG= LoggerFactory.getLogger(DownsamplingFishingService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DownsamplingFishingService.class);
+
+    private final ConcurrentMap<String, MovementBaseType> downSampledFishingVesselMovements = new ConcurrentHashMap<>();
 
     @Inject
     private ExchangeService exchangeService;
 
-    private ConcurrentMap<String, MovementBaseType> downSampledFishingVesselMovements = new ConcurrentHashMap<>();
+    @Inject
+    private FailedMovementsService failedMovementsService;
 
-    @Schedule(minute = "*/1", hour = "*", persistent = false )
+    @Schedule(minute = "*/1", hour = "*", persistent = false)
     public void handleDownSampledFishingVesselMovements() {
         if (downSampledFishingVesselMovements.isEmpty()) {
             return;
         }
-        LOG.info ("Handle {} downSampledFishingVesselMovements", downSampledFishingVesselMovements.size());
+        LOG.info("Handle {} downSampledFishingVesselMovements", downSampledFishingVesselMovements.size());
         List<MovementBaseType> movements = new ArrayList<>(downSampledFishingVesselMovements.values());
         downSampledFishingVesselMovements.clear();
-        exchangeService.sendMovements(movements);
+        List<MovementBaseType> failedToSendMovements = exchangeService.sendMovements(movements);
+        failedMovementsService.add(failedToSendMovements);
     }
 
     public Map<String, MovementBaseType> getDownSampledFishingVesselMovements() {
         return downSampledFishingVesselMovements;
     }
-
 }

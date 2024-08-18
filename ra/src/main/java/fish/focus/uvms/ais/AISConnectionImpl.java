@@ -41,90 +41,91 @@ import java.util.logging.Logger;
  *
  * @version $Revision: $
  */
-public class AISConnectionImpl implements AISConnection
-{
-   /** The logger */
-   private static Logger log = Logger.getLogger(AISConnectionImpl.class.getName());
+public class AISConnectionImpl implements AISConnection {
+    /**
+     * The logger
+     */
+    private static Logger log = Logger.getLogger(AISConnectionImpl.class.getName());
 
-   /** ManagedConnection */
-   private AISManagedConnection mc;
+    /**
+     * ManagedConnection
+     */
+    private AISManagedConnection mc;
 
-   /** ManagedConnectionFactory */
-   private AISManagedConnectionFactory mcf;
+    /**
+     * ManagedConnectionFactory
+     */
+    private AISManagedConnectionFactory mcf;
 
-   /**
-    * Default constructor
-    * @param mc AISManagedConnection
-    * @param mcf AISManagedConnectionFactory
-    */
-   public AISConnectionImpl(AISManagedConnection mc, AISManagedConnectionFactory mcf)
-   {
-      this.mc = mc;
-      this.mcf = mcf;
-   }
+    /**
+     * Default constructor
+     *
+     * @param mc  AISManagedConnection
+     * @param mcf AISManagedConnectionFactory
+     */
+    public AISConnectionImpl(AISManagedConnection mc, AISManagedConnectionFactory mcf) {
+        this.mc = mc;
+        this.mcf = mcf;
+    }
 
-   /**
-    * Call me
-    */
-   public void callMe()
-   {
-      if (mc != null)
-         mc.callMe();
-   }
+    /**
+     * Call me
+     */
+    public void callMe() {
+        if (mc != null)
+            mc.callMe();
+    }
 
-   @Override
-   public void open(String host, Integer port, String userName, String password) {
-      if (mc != null) {
-         mc.open(host, port, userName, password);
-      }
-   }
+    @Override
+    public void open(String host, Integer port, String userName, String password) {
+        if (mc != null) {
+            mc.open(host, port, userName, password);
+        }
+    }
 
-   @Override
-   public boolean isOpen() {
-      if (mc != null) {
-         return mc.isOpen();
-      }
+    @Override
+    public boolean isOpen() {
+        if (mc != null) {
+            return mc.isOpen();
+        }
 
-      return false;
-   }
+        return false;
+    }
 
-   @Override
-   public List<Sentence> getSentences() {
-      if (mc != null) {
-         return mc.getSentences();
-      }
+    @Override
+    public List<Sentence> getSentences() {
+        if (mc != null) {
+            return mc.getSentences();
+        }
 
-      return new ArrayList<>();
-   }
+        return new ArrayList<>();
+    }
 
-   @Override
-   public long getQueueSize() {
-      if (mc != null) {
-         return mc.getQueueSize();
-      }
+    @Override
+    public long getQueueSize() {
+        if (mc != null) {
+            return mc.getQueueSize();
+        }
 
-      return 0;
-   }
+        return 0;
+    }
 
-   /**
-    * Close
-    */
-   public void close()
-   {
-      if (mc != null)
-      {
-         mc.closeHandle(this);
-         mc = null;
-      }
+    /**
+     * Close
+     */
+    public void close() {
+        if (mc != null) {
+            mc.closeHandle(this);
+            mc = null;
+        }
 
-   }
+    }
 
-   /**
-    * Set ManagedConnection
-    */
-   void setManagedConnection(AISManagedConnection mc)
-   {
-      this.mc = mc;
-   }
+    /**
+     * Set ManagedConnection
+     */
+    void setManagedConnection(AISManagedConnection mc) {
+        this.mc = mc;
+    }
 
 }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>ais-module</artifactId>
@@ -9,7 +10,7 @@
     <parent>
         <groupId>fish.focus.uvms.plugins.ais</groupId>
         <artifactId>ais</artifactId>
-        <version>3.1.32</version>
+        <version>3.1.33</version>
     </parent>
 
     <build>
@@ -22,7 +23,7 @@
                 <configuration>
                     <modules>
                         <ejbModule>
-                            <groupId>${project.groupId}</groupId>  
+                            <groupId>${project.groupId}</groupId>
                             <artifactId>ais-service</artifactId>
                         </ejbModule>
                         <rarModule>
@@ -43,7 +44,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>${project.groupId}</groupId>  
+            <groupId>${project.groupId}</groupId>
             <artifactId>ais-service</artifactId>
             <version>${project.version}</version>
             <type>ejb</type>
@@ -56,15 +57,15 @@
         </dependency>
     </dependencies>
 
-   <profiles>
+    <profiles>
         <profile>
             <id>wildfly-deploy</id>
             <build>
-                <plugins>	
+                <plugins>
                     <plugin>
                         <groupId>org.wildfly.plugins</groupId>
                         <artifactId>wildfly-maven-plugin</artifactId>
-                        <version>4.2.2.Final</version>
+                        <version>5.0.0.Final</version>
                         <configuration>
                             <filename>${project.build.finalName}.${project.packaging}</filename>
                             <targetDir>${project.build.directory}</targetDir>
@@ -77,7 +78,7 @@
                     </plugin>
                 </plugins>
             </build>
-        </profile>        
-    </profiles>  
+        </profile>
+    </profiles>
 
 </project>

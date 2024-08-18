@@ -20,13 +20,11 @@ public abstract class PluginDataHolder {
     public static final String PLUGIN_PROPERTIES = "plugin.properties";
     public static final String PROPERTIES = "settings.properties";
     public static final String CAPABILITIES_PROPERTIES = "capabilities.properties";
-
+    private final ConcurrentHashMap<String, String> settings = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, String> capabilities = new ConcurrentHashMap<>();
     private Properties aisApplicaitonProperties;
     private Properties aisProperties;
     private Properties aisCapabilities;
-
-    private final ConcurrentHashMap<String, String> settings = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, String> capabilities = new ConcurrentHashMap<>();
 
     public ConcurrentMap<String, String> getSettings() {
         return settings;

@@ -1,23 +1,23 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>fish.focus.uvms.maven</groupId>
         <artifactId>uvms-pom</artifactId>
-        <version>3.19</version>
-        <relativePath />
+        <version>3.23</version>
+        <relativePath/>
     </parent>
 
     <groupId>fish.focus.uvms.plugins.ais</groupId>
     <artifactId>ais</artifactId>
-    <version>3.1.32</version>
+    <version>3.1.33</version>
     <packaging>pom</packaging>
     <description>UVMS AIS plugin.</description>
 
     <properties>
-        <exchange.model.version>5.3.29</exchange.model.version>
+        <exchange.model.version>5.3.30</exchange.model.version>
         <uvms.common.version>4.1.15</uvms.common.version>
     </properties>
 
@@ -37,7 +37,7 @@
             <groupId>fish.focus.uvms.maven</groupId>
             <artifactId>uvms-pom-java11-deps</artifactId>
             <type>pom</type>
-            <version>3.19</version>
+            <version>3.23</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
