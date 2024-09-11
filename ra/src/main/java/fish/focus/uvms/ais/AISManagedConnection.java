@@ -56,30 +56,16 @@ public class AISManagedConnection implements ManagedConnection {
     private static final int RETRY_DELAY_TIME_SEC = 10;
     private static final int SOCKET_SO_TIMEOUT = 5 * 60 * 1000;
 
-    /**
-     * The logger
-     */
-    private static Logger log = Logger.getLogger(AISManagedConnection.class.getName());
+    private static final Logger LOG = Logger.getLogger(AISManagedConnection.class.getName());
 
-    /**
-     * The logwriter
-     */
-    private PrintWriter logwriter;
+    private static final Pattern COMMENT_BLOCK_PATTERN = Pattern.compile("\\\\(.*?)\\\\(.*)");
 
-    /**
-     * ManagedConnectionFactory
-     */
-    private AISManagedConnectionFactory mcf;
+    private PrintWriter logWriter;
 
-    /**
-     * Listeners
-     */
-    private List<ConnectionEventListener> listeners;
+    private final AISManagedConnectionFactory mcf;
 
-    /**
-     * Connections
-     */
-    private Set<AISConnectionImpl> connections;
+    private final List<ConnectionEventListener> listeners;
+    private final Set<AISConnectionImpl> connections;
 
     private ConcurrentLinkedQueue<Sentence> sentences;
 
@@ -94,9 +80,9 @@ public class AISManagedConnection implements ManagedConnection {
      */
     public AISManagedConnection(AISManagedConnectionFactory mcf) {
         this.mcf = mcf;
-        this.logwriter = null;
-        this.listeners = Collections.synchronizedList(new ArrayList<ConnectionEventListener>(1));
-        this.connections = new HashSet<AISConnectionImpl>();
+        this.logWriter = null;
+        this.listeners = Collections.synchronizedList(new ArrayList<>(1));
+        this.connections = new HashSet<>();
     }
 
     /**
@@ -110,7 +96,7 @@ public class AISManagedConnection implements ManagedConnection {
      */
     public Object getConnection(Subject subject,
                                 ConnectionRequestInfo cxRequestInfo) throws ResourceException {
-        log.finest("getConnection()");
+        LOG.finest("getConnection()");
         AISConnectionImpl connection = new AISConnectionImpl(this, mcf);
         connections.add(connection);
         return connection;
@@ -124,7 +110,7 @@ public class AISManagedConnection implements ManagedConnection {
      * @throws ResourceException generic exception if operation fails
      */
     public void associateConnection(Object connection) throws ResourceException {
-        log.finest("associateConnection()");
+        LOG.finest("associateConnection()");
 
         if (connection == null)
             throw new ResourceException("Null connection handle");
@@ -143,12 +129,11 @@ public class AISManagedConnection implements ManagedConnection {
      * @throws ResourceException generic exception if operation fails
      */
     public void cleanup() throws ResourceException {
-        log.finest("cleanup()");
+        LOG.finest("cleanup()");
         for (AISConnectionImpl connection : connections) {
             connection.setManagedConnection(null);
         }
         connections.clear();
-
     }
 
     /**
@@ -157,7 +142,7 @@ public class AISManagedConnection implements ManagedConnection {
      * @throws ResourceException generic exception if operation fails
      */
     public void destroy() throws ResourceException {
-        log.finest("destroy()");
+        LOG.finest("destroy()");
 
     }
 
@@ -167,7 +152,7 @@ public class AISManagedConnection implements ManagedConnection {
      * @param listener A new ConnectionEventListener to be registered
      */
     public void addConnectionEventListener(ConnectionEventListener listener) {
-        log.finest("addConnectionEventListener()");
+        LOG.finest("addConnectionEventListener()");
         if (listener == null)
             throw new IllegalArgumentException("Listener is null");
         listeners.add(listener);
@@ -179,7 +164,7 @@ public class AISManagedConnection implements ManagedConnection {
      * @param listener already registered connection event listener to be removed
      */
     public void removeConnectionEventListener(ConnectionEventListener listener) {
-        log.finest("removeConnectionEventListener()");
+        LOG.finest("removeConnectionEventListener()");
         if (listener == null)
             throw new IllegalArgumentException("Listener is null");
         listeners.remove(listener);
@@ -196,7 +181,7 @@ public class AISManagedConnection implements ManagedConnection {
             try {
                 socket.close();
             } catch (IOException e) {
-                log.warning("Error when closing socket. " + e);
+                LOG.warning("Error when closing socket. " + e);
             }
         }
         connections.remove((AISConnectionImpl) handle);
@@ -205,7 +190,6 @@ public class AISManagedConnection implements ManagedConnection {
         for (ConnectionEventListener cel : listeners) {
             cel.connectionClosed(event);
         }
-
     }
 
     /**
@@ -215,8 +199,8 @@ public class AISManagedConnection implements ManagedConnection {
      * @throws ResourceException generic exception if operation fails
      */
     public PrintWriter getLogWriter() throws ResourceException {
-        log.finest("getLogWriter()");
-        return logwriter;
+        LOG.finest("getLogWriter()");
+        return logWriter;
     }
 
     /**
@@ -226,8 +210,8 @@ public class AISManagedConnection implements ManagedConnection {
      * @throws ResourceException generic exception if operation fails
      */
     public void setLogWriter(PrintWriter out) throws ResourceException {
-        log.finest("setLogWriter()");
-        logwriter = out;
+        LOG.finest("setLogWriter()");
+        logWriter = out;
     }
 
     /**
@@ -257,7 +241,7 @@ public class AISManagedConnection implements ManagedConnection {
      * @throws ResourceException generic exception if operation fails
      */
     public ManagedConnectionMetaData getMetaData() throws ResourceException {
-        log.finest("getMetaData()");
+        LOG.finest("getMetaData()");
         return new AISManagedConnectionMetaData();
     }
 
@@ -265,12 +249,10 @@ public class AISManagedConnection implements ManagedConnection {
      * Call me
      */
     void callMe() {
-        log.finest("callMe()");
+        LOG.finest("callMe()");
         if (sentences == null) {
             sentences = new ConcurrentLinkedQueue<>();
         }
-        //System.out.println("Sentences: " + sentences.size());
-        //System.out.println("Sentences: " + sentences);
     }
 
     public boolean isOpen() {
@@ -308,8 +290,8 @@ public class AISManagedConnection implements ManagedConnection {
                         BufferedReader commandInput = tryOpen(host, port, userName, password);
                         read(commandInput);
                     } catch (Exception e) {
-                        log.warning("AIS connection lost: " + e.getLocalizedMessage());
-                        log.warning("Exception: " + e);
+                        LOG.warning("AIS connection lost: " + e.getLocalizedMessage());
+                        LOG.warning("Exception: " + e);
                     } finally {
                         try {
                             if (socket.isConnected()) {
@@ -317,8 +299,8 @@ public class AISManagedConnection implements ManagedConnection {
                             }
                             Thread.sleep(RETRY_DELAY_TIME_SEC * 1000L);
                         } catch (Exception e) {
-                            log.info("//NOP: {}" + e.getLocalizedMessage());
-                            log.info("Exception:" + e);
+                            LOG.info("//NOP: {}" + e.getLocalizedMessage());
+                            LOG.info("Exception:" + e);
                         }
                     }
                 }
@@ -336,8 +318,8 @@ public class AISManagedConnection implements ManagedConnection {
         socket.connect(new InetSocketAddress(InetAddress.getByName(host), port));
 
         BufferedWriter commandOut = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-        log.info("AISWorker: Connection established");
-        log.info("AISWorker: Socket-parameter: " + socket);
+        LOG.info("AISWorker: Connection established");
+        LOG.info("AISWorker: Socket-parameter: " + socket);
 
         String loginCmd = '\u0001' + userName + '\u0000' + password + '\u0000';
         commandOut.write(loginCmd);
@@ -348,13 +330,12 @@ public class AISManagedConnection implements ManagedConnection {
 
     void read(BufferedReader commandInput) throws IOException {
         String input;
-        String tmp = "";
+        String payload = "";
         String commentBlock = null;
-        Pattern pattern = Pattern.compile("\\\\(.*?)\\\\(.*)");
         // Infinite read until read is EOF
         while ((input = commandInput.readLine()) != null) {
             try {
-                Matcher matcher = pattern.matcher(input);
+                Matcher matcher = COMMENT_BLOCK_PATTERN.matcher(input);
                 if (matcher.matches()) {
                     if (commentBlock == null) {
                         commentBlock = matcher.group(1);
@@ -363,26 +344,27 @@ public class AISManagedConnection implements ManagedConnection {
                 }
                 // Split the incoming line
                 String[] arr = input.split(",");
-                if (arr != null && arr.length > 4 && !"$ABVSI".equals(arr[0])) {
-                    if (Integer.parseInt(arr[1]) == 2) {
-                        tmp += arr[5];
-                        // If this part is the last sentence part, cache it
-                        if (Integer.parseInt(arr[1]) == Integer.parseInt(arr[2])) {
-                            sentences.add(new Sentence(commentBlock, tmp));
-                            tmp = "";
-                            commentBlock = null;
-                        }
-                    } else {
-                        // This is a single sentence message, cache it
-                        sentences.add(new Sentence(commentBlock, arr[5]));
+                if (arr.length <= 4 || "$ABVSI".equals(arr[0])) {
+                    continue;
+                }
+
+                if (Integer.parseInt(arr[1]) == 2) {
+                    payload += arr[5];
+                    // If this part is the last sentence part, cache it
+                    if (Integer.parseInt(arr[1]) == Integer.parseInt(arr[2])) {
+                        sentences.add(new Sentence(commentBlock, payload));
+                        payload = "";
                         commentBlock = null;
                     }
+                } else {
+                    // This is a single sentence message, cache it
+                    sentences.add(new Sentence(commentBlock, arr[5]));
+                    commentBlock = null;
                 }
             } catch (Exception e) {
-                log.fine("Input:" + input);
-                log.fine("Exception: " + e);
+                LOG.fine("Input:" + input);
+                LOG.fine("Exception: " + e);
             }
-
         }
     }
 }
