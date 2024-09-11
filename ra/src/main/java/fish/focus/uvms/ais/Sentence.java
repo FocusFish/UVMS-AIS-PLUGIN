@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 
 public class Sentence {
 
-    private String commentBlock;
-    private String payload;
+    private final String commentBlock;
+    private final String payload;
 
     public Sentence(String commentBlock, String payload) {
         this.commentBlock = commentBlock;
@@ -40,6 +40,6 @@ public class Sentence {
         if (!commentBlockProperties.containsKey("c")) {
             return null;
         }
-        return Instant.ofEpochSecond(Long.valueOf(commentBlockProperties.get("c")));
+        return Instant.ofEpochSecond(Long.parseLong(commentBlockProperties.get("c")));
     }
 }
