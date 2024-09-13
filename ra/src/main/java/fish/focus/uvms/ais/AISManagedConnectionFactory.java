@@ -37,6 +37,7 @@ import javax.resource.spi.*;
 import javax.security.auth.Subject;
 import java.io.PrintWriter;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -180,33 +181,23 @@ public class AISManagedConnectionFactory implements ManagedConnectionFactory, Re
         this.ra = ra;
     }
 
-    /**
-     * Returns a hash code value for the object.
-     *
-     * @return A hash code value for this object.
-     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        AISManagedConnectionFactory that = (AISManagedConnectionFactory) o;
+        return Objects.equals(ra, that.ra) && Objects.equals(logwriter, that.logwriter);
+    }
+
     @Override
     public int hashCode() {
-        int result = 17;
+        int result = Objects.hashCode(ra);
+        result = 31 * result + Objects.hashCode(logwriter);
         return result;
     }
-
-    /**
-     * Indicates whether some other object is equal to this one.
-     *
-     * @param other The reference object with which to compare.
-     * @return true if this object is the same as the obj argument, false otherwise.
-     */
-    @Override
-    public boolean equals(Object other) {
-        if (other == null)
-            return false;
-        if (other == this)
-            return true;
-        if (!(other instanceof AISManagedConnectionFactory))
-            return false;
-        boolean result = true;
-        return result;
-    }
-
 }

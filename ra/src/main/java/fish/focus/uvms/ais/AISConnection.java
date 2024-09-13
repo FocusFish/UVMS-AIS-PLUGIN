@@ -40,10 +40,6 @@ import java.util.List;
  * @version $Revision: $
  */
 public interface AISConnection {
-    /**
-     * Call me
-     */
-    public void callMe();
 
     public boolean isOpen();
 
@@ -51,11 +47,5 @@ public interface AISConnection {
 
     public List<Sentence> getSentences();
 
-    public long getQueueSize();
-
-
-    /**
-     * Close
-     */
     public void close();
 }
