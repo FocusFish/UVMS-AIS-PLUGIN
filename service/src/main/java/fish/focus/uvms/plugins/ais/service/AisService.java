@@ -12,8 +12,9 @@ copy of the GNU General Public License along with the IFDM Suite. If not, see <h
 package fish.focus.uvms.plugins.ais.service;
 
 import fish.focus.uvms.ais.AISConnection;
-import fish.focus.uvms.ais.AISConnectionFactoryImpl;
+import fish.focus.uvms.ais.AISConnectionFactory;
 import fish.focus.uvms.ais.Sentence;
+import fish.focus.uvms.inject.Managed;
 import fish.focus.uvms.plugins.ais.StartupBean;
 import org.eclipse.microprofile.metrics.MetricUnits;
 import org.eclipse.microprofile.metrics.annotation.Gauge;
@@ -22,17 +23,20 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.annotation.Resource;
-import javax.ejb.*;
+import javax.ejb.DependsOn;
+import javax.ejb.Schedule;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
 import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.inject.Inject;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.resource.ResourceException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+
+import static java.time.temporal.ChronoUnit.MINUTES;
 
 @Singleton
 @Startup
@@ -44,54 +48,85 @@ public class AisService {
     private final List<CompletableFuture<Void>> processes = new ArrayList<>();
     private final Set<String> knownFishingVessels = new HashSet<>();
 
-    @Inject
-    StartupBean startUp;
-
-    @Inject
-    private FailedMovementsService failedMovementsService;
-
-    @EJB
+    private StartupBean startUp;
     private ProcessService processService;
-
-    @Inject
     private DownsamplingService downsamplingService;
-
-    @Inject
     private DownsamplingFishingService downsamplingFishingService;
-
-    @Inject
     private DownsamplingAssetService downsamplingAssetService;
-
-    @Resource
     private ManagedExecutorService executorService;
+    private AISConnectionFactory factory;
 
     private AISConnection connection;
 
+    /**
+     * Used for keeping track of reconnect attempts for the "socket stuck" problem
+     */
+    private int numberOfReconnectAttempts = 0;
+
+    /**
+     * Used when the socket has gotten "stuck".
+     */
+    Instant lastConnectionAttempt;
+
+    int shortBackOffTime = 1;
+    int longBackOffTime = 10;
+    ChronoUnit backOffUnit = MINUTES;
+
+    public AisService() {
+    }
+
+    @Inject
+    public AisService(StartupBean startUp, ProcessService processService, DownsamplingService downsamplingService,
+                      DownsamplingFishingService downsamplingFishingService, DownsamplingAssetService downsamplingAssetService,
+                      @Managed ManagedExecutorService executorService, @Managed AISConnectionFactory factory) {
+        this.startUp = startUp;
+        this.processService = processService;
+        this.downsamplingService = downsamplingService;
+        this.downsamplingFishingService = downsamplingFishingService;
+        this.downsamplingAssetService = downsamplingAssetService;
+        this.executorService = executorService;
+        this.factory = factory;
+    }
+
     @PostConstruct
     public void init() {
+        LOG.debug("AisService init");
         try {
-            Context ctx = new InitialContext();
-            AISConnectionFactoryImpl factory = (AISConnectionFactoryImpl) ctx.lookup("java:/eis/AISConnectionFactory");
-            if (factory != null) {
-                LOG.debug("Factory lookup done! {}, {}", factory, factory.getClass());
-                connection = factory.getConnection();
-
-                if (startUp.isEnabled() && connection != null && !connection.isOpen()) {
-                    String host = startUp.getSetting("HOST");
-                    int port = Integer.parseInt(startUp.getSetting("PORT"));
-                    String username = startUp.getSetting("USERNAME");
-                    String password = startUp.getSetting("PASSWORD");
-
-                    connection.open(host, port, username, password);
-                }
+            if (factory == null) {
+                return;
             }
-        } catch (NamingException | ResourceException e) {
-            LOG.error("Exception: {}", e);
+
+            connection = factory.getConnection();
+
+            if (connection == null || connection.isOpen()) {
+                return;
+            }
+
+            if (!startUp.isEnabled()) {
+                return;
+            }
+
+            connect();
+        } catch (ResourceException e) {
+            LOG.error("Exception during init: ", e);
         }
+    }
+
+    private void connect() {
+        lastConnectionAttempt = Instant.now();
+
+        String host = startUp.getSetting("HOST");
+        int port = Integer.parseInt(startUp.getSetting("PORT"));
+        String username = startUp.getSetting("USERNAME");
+        String password = startUp.getSetting("PASSWORD");
+
+        LOG.info("Trying to connect to {}:{}", host, port);
+        connection.open(host, port, username, password);
     }
 
     @PreDestroy
     public void destroy() {
+        LOG.debug("Shutting down AisService");
         if (connection != null) {
             connection.close();
         }
@@ -112,38 +147,87 @@ public class AisService {
     }
 
     @Schedule(second = "*/15", minute = "*", hour = "*", persistent = false)
-    public void connectAndRetrive() {
-        if (!startUp.isEnabled()) {
+    public void connectAndRetrieve() {
+        if (isConnectionDown()) {
             return;
         }
+
+        processes.removeIf(process -> process.isDone() || process.isCancelled());
+
+        List<Sentence> sentences = connection.getSentences();
+        startUp.incrementAisIncomingAll(sentences.size());
+        CompletableFuture<Void> process = CompletableFuture.supplyAsync(() -> processService.processMessages(sentences, knownFishingVessels), executorService)
+                .thenAccept(result -> {
+                            downsamplingService.getDownSampledMovements().putAll(result.getDownsampledMovements());
+                            downsamplingAssetService.getStoredAssetInfo().putAll(result.getDownsampledAssets());
+                            downsamplingFishingService.getDownSampledFishingVesselMovements().putAll(result.getDownSampledFishingVesselMovements());
+                        }
+                );
+        processes.add(process);
+        LOG.info("Got {} sentences from AIS RA. Currently running {} parallel threads", sentences.size(), processes.size());
+
+        if (!sentences.isEmpty()) {
+            // reconnecting worked and are now receiving messages again
+            numberOfReconnectAttempts = 0;
+        }
+
+        if (sentences.isEmpty() && shouldTryToReconnect()) {
+            // no new data was sent. This might indicate the "socket stuck" problem
+            LOG.warn("No new data received. Reconnecting socket.");
+            reconnect();
+        }
+    }
+
+    private boolean isConnectionDown() {
+        if (!startUp.isEnabled()) {
+            destroy();
+            return true;
+        }
+
         if (connection != null && !connection.isOpen()) {
-            String host = startUp.getSetting("HOST");
-            int port = Integer.parseInt(startUp.getSetting("PORT"));
-            String username = startUp.getSetting("USERNAME");
-            String password = startUp.getSetting("PASSWORD");
-
-            connection.open(host, port, username, password);
+            connect();
         }
 
-        if (connection != null && connection.isOpen()) {
-            Iterator<CompletableFuture<Void>> processIterator = processes.iterator();
-            while (processIterator.hasNext()) {
-                CompletableFuture<Void> process = processIterator.next();
-                if (process.isDone() || process.isCancelled()) {
-                    processIterator.remove();
-                }
-            }
-            List<Sentence> sentences = connection.getSentences();
-            CompletableFuture<Void> process = CompletableFuture.supplyAsync(() -> processService.processMessages(sentences, knownFishingVessels), executorService)
-                    .thenAccept(result -> {
-                                downsamplingService.getDownSampledMovements().putAll(result.getDownsampledMovements());
-                                downsamplingAssetService.getStoredAssetInfo().putAll(result.getDownsampledAssets());
-                                downsamplingFishingService.getDownSampledFishingVesselMovements().putAll(result.getDownSampledFishingVesselMovements());
-                            }
-                    );
-            processes.add(process);
-            LOG.info("Got {} sentences from AIS RA. Currently running {} parallel threads", sentences.size(), processes.size());
+        if (connection == null || !connection.isOpen()) {
+            LOG.warn("Connection was down. Reconnecting again.");
+            reconnect();
         }
+
+        if (connection == null || !connection.isOpen()) {
+            // failed to init a new connection above => try again later
+            LOG.warn("Failed to init an AIS connection");
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Back off 1 min between connection retries for the first 5 tries. Then wait 10min before retrying again.
+     *
+     * @return true if the connection should be reconnected. False otherwise.
+     */
+    private boolean shouldTryToReconnect() {
+        var now = Instant.now();
+
+        int backOffTime = longBackOffTime;
+
+        if (numberOfReconnectAttempts < 5) {
+            backOffTime = shortBackOffTime;
+        }
+
+        boolean shouldTryReconnect = lastConnectionAttempt.plus(backOffTime, backOffUnit).isBefore(now);
+        LOG.info("last connection attempt was at {} with {} connection attempts. Should try to connect = {}",
+                lastConnectionAttempt, numberOfReconnectAttempts, shouldTryReconnect);
+        return shouldTryReconnect;
+    }
+
+    private void reconnect() {
+        if (connection != null) {
+            connection.close();
+        }
+        numberOfReconnectAttempts += 1;
+        init();
     }
 
     public Set<String> getKnownFishingVessels() {

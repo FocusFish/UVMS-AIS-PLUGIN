@@ -52,6 +52,10 @@ public class StartupBean extends PluginDataHolder {
     @Metric(name = "ais_incoming", absolute = true)
     private Counter aisIncoming;
 
+    @Inject
+    @Metric(name = "ais_incoming_all", absolute = true)
+    private Counter aisIncomingAll;
+
     private boolean registered = false;
     private boolean enabled = false;
     private boolean waitingForResponse = false;
@@ -204,5 +208,9 @@ public class StartupBean extends PluginDataHolder {
 
     public void incrementAisIncoming() {
         aisIncoming.inc();
+    }
+
+    public void incrementAisIncomingAll(long number) {
+        aisIncomingAll.inc(number);
     }
 }
