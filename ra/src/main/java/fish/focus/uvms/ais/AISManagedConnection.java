@@ -43,9 +43,14 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * AISManagedConnection
@@ -53,39 +58,28 @@ import java.util.regex.Pattern;
  * @version $Revision: $
  */
 public class AISManagedConnection implements ManagedConnection {
+    private static final Logger LOG = Logger.getLogger(AISManagedConnection.class.getName());
+
+    private static final AtomicInteger NUMBER_OF_STARTED_THREADS = new AtomicInteger(0);
+
     private static final int RETRY_DELAY_TIME_SEC = 10;
     private static final int SOCKET_SO_TIMEOUT = 5 * 60 * 1000;
 
-    /**
-     * The logger
-     */
-    private static Logger log = Logger.getLogger(AISManagedConnection.class.getName());
+    private static final Pattern COMMENT_BLOCK_PATTERN = Pattern.compile("\\\\(.*?)\\\\(.*)");
 
-    /**
-     * The logwriter
-     */
-    private PrintWriter logwriter;
-
-    /**
-     * ManagedConnectionFactory
-     */
-    private AISManagedConnectionFactory mcf;
-
-    /**
-     * Listeners
-     */
-    private List<ConnectionEventListener> listeners;
-
-    /**
-     * Connections
-     */
-    private Set<AISConnectionImpl> connections;
+    private volatile boolean continueRetry = true;
+    private final AtomicReference<CountDownLatch> atomicCountDownLatch = new AtomicReference<>(new CountDownLatch(1));
 
     private ConcurrentLinkedQueue<Sentence> sentences;
 
-    private boolean open = false;
-    private boolean continueRetry = true;
     private Socket socket;
+
+    private PrintWriter logWriter;
+
+    private final AISManagedConnectionFactory mcf;
+
+    private final List<ConnectionEventListener> listeners;
+    private final Set<AISConnectionImpl> connections;
 
     /**
      * Default constructor
@@ -94,9 +88,9 @@ public class AISManagedConnection implements ManagedConnection {
      */
     public AISManagedConnection(AISManagedConnectionFactory mcf) {
         this.mcf = mcf;
-        this.logwriter = null;
-        this.listeners = Collections.synchronizedList(new ArrayList<ConnectionEventListener>(1));
-        this.connections = new HashSet<AISConnectionImpl>();
+        this.logWriter = null;
+        this.listeners = Collections.synchronizedList(new ArrayList<>(1));
+        this.connections = new HashSet<>();
     }
 
     /**
@@ -110,7 +104,7 @@ public class AISManagedConnection implements ManagedConnection {
      */
     public Object getConnection(Subject subject,
                                 ConnectionRequestInfo cxRequestInfo) throws ResourceException {
-        log.finest("getConnection()");
+        LOG.finest("getConnection()");
         AISConnectionImpl connection = new AISConnectionImpl(this, mcf);
         connections.add(connection);
         return connection;
@@ -124,7 +118,7 @@ public class AISManagedConnection implements ManagedConnection {
      * @throws ResourceException generic exception if operation fails
      */
     public void associateConnection(Object connection) throws ResourceException {
-        log.finest("associateConnection()");
+        LOG.finest("associateConnection()");
 
         if (connection == null)
             throw new ResourceException("Null connection handle");
@@ -133,7 +127,6 @@ public class AISManagedConnection implements ManagedConnection {
             throw new ResourceException("Wrong connection handle");
 
         AISConnectionImpl handle = (AISConnectionImpl) connection;
-        handle.setManagedConnection(this);
         connections.add(handle);
     }
 
@@ -143,12 +136,8 @@ public class AISManagedConnection implements ManagedConnection {
      * @throws ResourceException generic exception if operation fails
      */
     public void cleanup() throws ResourceException {
-        log.finest("cleanup()");
-        for (AISConnectionImpl connection : connections) {
-            connection.setManagedConnection(null);
-        }
+        LOG.finest("cleanup()");
         connections.clear();
-
     }
 
     /**
@@ -157,8 +146,9 @@ public class AISManagedConnection implements ManagedConnection {
      * @throws ResourceException generic exception if operation fails
      */
     public void destroy() throws ResourceException {
-        log.finest("destroy()");
-
+        LOG.finest("destroy()");
+        connections.forEach(AISConnectionImpl::close);
+        connections.clear();
     }
 
     /**
@@ -167,7 +157,7 @@ public class AISManagedConnection implements ManagedConnection {
      * @param listener A new ConnectionEventListener to be registered
      */
     public void addConnectionEventListener(ConnectionEventListener listener) {
-        log.finest("addConnectionEventListener()");
+        LOG.finest("addConnectionEventListener()");
         if (listener == null)
             throw new IllegalArgumentException("Listener is null");
         listeners.add(listener);
@@ -179,7 +169,7 @@ public class AISManagedConnection implements ManagedConnection {
      * @param listener already registered connection event listener to be removed
      */
     public void removeConnectionEventListener(ConnectionEventListener listener) {
-        log.finest("removeConnectionEventListener()");
+        LOG.finest("removeConnectionEventListener()");
         if (listener == null)
             throw new IllegalArgumentException("Listener is null");
         listeners.remove(listener);
@@ -191,21 +181,26 @@ public class AISManagedConnection implements ManagedConnection {
      * @param handle The handle
      */
     void closeHandle(AISConnection handle) {
-        continueRetry = false;
-        if (socket != null) {
-            try {
-                socket.close();
-            } catch (IOException e) {
-                log.warning("Error when closing socket. " + e);
-            }
-        }
+        LOG.finest("closing connection handle");
+        closeSocket();
         connections.remove((AISConnectionImpl) handle);
         ConnectionEvent event = new ConnectionEvent(this, ConnectionEvent.CONNECTION_CLOSED);
         event.setConnectionHandle(handle);
         for (ConnectionEventListener cel : listeners) {
             cel.connectionClosed(event);
         }
+    }
 
+    public void closeSocket() {
+        LOG.finest("Closing socket");
+        continueRetry = false;
+        if (socket != null) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                LOG.warning("Error when closing socket. " + e);
+            }
+        }
     }
 
     /**
@@ -215,8 +210,8 @@ public class AISManagedConnection implements ManagedConnection {
      * @throws ResourceException generic exception if operation fails
      */
     public PrintWriter getLogWriter() throws ResourceException {
-        log.finest("getLogWriter()");
-        return logwriter;
+        LOG.finest("getLogWriter()");
+        return logWriter;
     }
 
     /**
@@ -226,8 +221,8 @@ public class AISManagedConnection implements ManagedConnection {
      * @throws ResourceException generic exception if operation fails
      */
     public void setLogWriter(PrintWriter out) throws ResourceException {
-        log.finest("setLogWriter()");
-        logwriter = out;
+        LOG.finest("setLogWriter()");
+        logWriter = out;
     }
 
     /**
@@ -257,24 +252,14 @@ public class AISManagedConnection implements ManagedConnection {
      * @throws ResourceException generic exception if operation fails
      */
     public ManagedConnectionMetaData getMetaData() throws ResourceException {
-        log.finest("getMetaData()");
+        LOG.finest("getMetaData()");
         return new AISManagedConnectionMetaData();
     }
 
-    /**
-     * Call me
-     */
-    void callMe() {
-        log.finest("callMe()");
-        if (sentences == null) {
-            sentences = new ConcurrentLinkedQueue<>();
-        }
-        //System.out.println("Sentences: " + sentences.size());
-        //System.out.println("Sentences: " + sentences);
-    }
-
     public boolean isOpen() {
-        return open;
+        boolean socketIsOpen = atomicCountDownLatch.get().getCount() == 0;
+        LOG.finest("socket open = " + socketIsOpen);
+        return socketIsOpen;
     }
 
     public List<Sentence> getSentences() {
@@ -282,34 +267,31 @@ public class AISManagedConnection implements ManagedConnection {
             sentences = new ConcurrentLinkedQueue<>();
         }
 
-        ArrayList<Sentence> returnList = new ArrayList<>();
-        returnList.addAll(sentences);
-        sentences.clear();
+        List<Sentence> returnList = new ArrayList<>(sentences.size());
+
+        for (Sentence sentence = sentences.poll(); sentence != null; sentence = sentences.poll()) {
+            returnList.add(sentence);
+        }
 
         return returnList;
     }
 
-    public long getQueueSize() {
-        if (sentences == null) {
-            sentences = new ConcurrentLinkedQueue<>();
-        }
-
-        return sentences.size();
-    }
-
-    void open(final String host, final Integer port, final String userName, final String password) {
-        new Thread("AIS Read thread") {
+    public void open(final String host, final Integer port, final String userName, final String password) {
+        LOG.finest("Starting AIS reader thread");
+        continueRetry = true;
+        new Thread("AIS Read thread" + NUMBER_OF_STARTED_THREADS.getAndIncrement()) {
             @Override
             public void run() {
-                open = true;
+                LOG.finest("AIS reader thread started");
+                atomicCountDownLatch.get().countDown();
                 while (continueRetry) {
                     socket = new Socket();
                     try {
                         BufferedReader commandInput = tryOpen(host, port, userName, password);
                         read(commandInput);
                     } catch (Exception e) {
-                        log.warning("AIS connection lost: " + e.getLocalizedMessage());
-                        log.warning("Exception: " + e);
+                        LOG.warning("AIS connection lost: " + e.getLocalizedMessage());
+                        LOG.warning("Exception: " + e);
                     } finally {
                         try {
                             if (socket.isConnected()) {
@@ -317,18 +299,35 @@ public class AISManagedConnection implements ManagedConnection {
                             }
                             Thread.sleep(RETRY_DELAY_TIME_SEC * 1000L);
                         } catch (Exception e) {
-                            log.info("//NOP: {}" + e.getLocalizedMessage());
-                            log.info("Exception:" + e);
+                            LOG.info("//NOP: {}" + e.getLocalizedMessage());
+                            LOG.info("Exception:" + e);
                         }
                     }
                 }
 
-                open = false;
+                LOG.finest("Stopping AIS reader thread");
+                CountDownLatch oldLatch = atomicCountDownLatch.get();
+                atomicCountDownLatch.compareAndSet(oldLatch, new CountDownLatch(1));
             }
         }.start();
+
+        waitForThreadStart();
+    }
+
+    private void waitForThreadStart() {
+        try {
+            boolean isStarted = atomicCountDownLatch.get().await(1, SECONDS);
+            if (!isStarted) {
+                LOG.warning("Failed to start the AIS Reader Thread within the allotted 1s.");
+            }
+        } catch (InterruptedException e) {
+            LOG.warning("Thread got interrupted while waiting for AIS read thread to start.");
+            Thread.currentThread().interrupt();
+        }
     }
 
     BufferedReader tryOpen(final String host, final Integer port, final String userName, final String password) throws IOException {
+        LOG.info("Trying to connect to " + host + " on port " + port);
         sentences = new ConcurrentLinkedQueue<>();
 
         socket.setKeepAlive(true);
@@ -336,8 +335,8 @@ public class AISManagedConnection implements ManagedConnection {
         socket.connect(new InetSocketAddress(InetAddress.getByName(host), port));
 
         BufferedWriter commandOut = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-        log.info("AISWorker: Connection established");
-        log.info("AISWorker: Socket-parameter: " + socket);
+        LOG.info("AISWorker: Connection established");
+        LOG.info("AISWorker: Socket-parameter: " + socket);
 
         String loginCmd = '\u0001' + userName + '\u0000' + password + '\u0000';
         commandOut.write(loginCmd);
@@ -348,13 +347,12 @@ public class AISManagedConnection implements ManagedConnection {
 
     void read(BufferedReader commandInput) throws IOException {
         String input;
-        String tmp = "";
+        String payload = "";
         String commentBlock = null;
-        Pattern pattern = Pattern.compile("\\\\(.*?)\\\\(.*)");
         // Infinite read until read is EOF
         while ((input = commandInput.readLine()) != null) {
             try {
-                Matcher matcher = pattern.matcher(input);
+                Matcher matcher = COMMENT_BLOCK_PATTERN.matcher(input);
                 if (matcher.matches()) {
                     if (commentBlock == null) {
                         commentBlock = matcher.group(1);
@@ -363,26 +361,53 @@ public class AISManagedConnection implements ManagedConnection {
                 }
                 // Split the incoming line
                 String[] arr = input.split(",");
-                if (arr != null && arr.length > 4 && !"$ABVSI".equals(arr[0])) {
-                    if (Integer.parseInt(arr[1]) == 2) {
-                        tmp += arr[5];
-                        // If this part is the last sentence part, cache it
-                        if (Integer.parseInt(arr[1]) == Integer.parseInt(arr[2])) {
-                            sentences.add(new Sentence(commentBlock, tmp));
-                            tmp = "";
-                            commentBlock = null;
-                        }
-                    } else {
-                        // This is a single sentence message, cache it
-                        sentences.add(new Sentence(commentBlock, arr[5]));
+                if (arr.length <= 4 || "$ABVSI".equals(arr[0])) {
+                    continue;
+                }
+
+                if (Integer.parseInt(arr[1]) == 2) {
+                    payload += arr[5];
+                    // If this part is the last sentence part, cache it
+                    if (Integer.parseInt(arr[1]) == Integer.parseInt(arr[2])) {
+                        sentences.add(new Sentence(commentBlock, payload));
+                        payload = "";
                         commentBlock = null;
                     }
+                } else {
+                    // This is a single sentence message, cache it
+                    sentences.add(new Sentence(commentBlock, arr[5]));
+                    commentBlock = null;
                 }
             } catch (Exception e) {
-                log.fine("Input:" + input);
-                log.fine("Exception: " + e);
+                LOG.warning("Input:" + input);
+                LOG.warning("Exception: " + e);
             }
-
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AISManagedConnection that = (AISManagedConnection) o;
+        return continueRetry == that.continueRetry &&
+                Objects.equals(sentences, that.sentences) &&
+                Objects.equals(socket, that.socket) &&
+                Objects.equals(logWriter, that.logWriter) &&
+                Objects.equals(mcf, that.mcf) &&
+                listeners.equals(that.listeners);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Boolean.hashCode(continueRetry);
+        result = 31 * result + atomicCountDownLatch.hashCode();
+        result = 31 * result + Objects.hashCode(sentences);
+        result = 31 * result + Objects.hashCode(socket);
+        result = 31 * result + Objects.hashCode(logWriter);
+        result = 31 * result + Objects.hashCode(mcf);
+        result = 31 * result + listeners.hashCode();
+        return result;
     }
 }

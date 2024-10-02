@@ -32,8 +32,8 @@ copy of the GNU General Public License along with the IFDM Suite. If not, see <h
  */
 package fish.focus.uvms.ais;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 /**
@@ -45,7 +45,7 @@ public class AISConnectionImpl implements AISConnection {
     /**
      * The logger
      */
-    private static Logger log = Logger.getLogger(AISConnectionImpl.class.getName());
+    private static final Logger LOG = Logger.getLogger(AISConnectionImpl.class.getName());
 
     /**
      * ManagedConnection
@@ -68,16 +68,9 @@ public class AISConnectionImpl implements AISConnection {
         this.mcf = mcf;
     }
 
-    /**
-     * Call me
-     */
-    public void callMe() {
-        if (mc != null)
-            mc.callMe();
-    }
-
     @Override
     public void open(String host, Integer port, String userName, String password) {
+        LOG.finest("Open connection");
         if (mc != null) {
             mc.open(host, port, userName, password);
         }
@@ -85,47 +78,44 @@ public class AISConnectionImpl implements AISConnection {
 
     @Override
     public boolean isOpen() {
-        if (mc != null) {
-            return mc.isOpen();
+        LOG.finest("isOpen");
+        if (mc == null) {
+            return false;
         }
-
-        return false;
+        return mc.isOpen();
     }
 
     @Override
     public List<Sentence> getSentences() {
-        if (mc != null) {
-            return mc.getSentences();
+        LOG.finest("getSentences");
+        if (mc == null) {
+            return List.of();
         }
-
-        return new ArrayList<>();
+        return mc.getSentences();
     }
 
     @Override
-    public long getQueueSize() {
-        if (mc != null) {
-            return mc.getQueueSize();
-        }
-
-        return 0;
-    }
-
-    /**
-     * Close
-     */
     public void close() {
+        LOG.finest("Closing connection");
         if (mc != null) {
             mc.closeHandle(this);
             mc = null;
         }
-
     }
 
-    /**
-     * Set ManagedConnection
-     */
-    void setManagedConnection(AISManagedConnection mc) {
-        this.mc = mc;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AISConnectionImpl that = (AISConnectionImpl) o;
+        return Objects.equals(mc, that.mc) && Objects.equals(mcf, that.mcf);
     }
 
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(mc);
+        result = 31 * result + Objects.hashCode(mcf);
+        return result;
+    }
 }

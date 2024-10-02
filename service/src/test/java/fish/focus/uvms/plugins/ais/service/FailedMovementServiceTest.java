@@ -31,7 +31,7 @@ public class FailedMovementServiceTest {
 
     @Test
     public void resendFailedMovementsTest() {
-        when(startUp.isRegistered()).thenReturn(true);
+        when(startUp.isEnabled()).thenReturn(true);
 
         MovementBaseType failedMovement = new MovementBaseType();
         List<MovementBaseType> failedMovements = List.of(failedMovement);

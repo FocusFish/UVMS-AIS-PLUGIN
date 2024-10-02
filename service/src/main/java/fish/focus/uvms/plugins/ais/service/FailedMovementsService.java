@@ -26,7 +26,7 @@ public class FailedMovementsService {
 
     @Schedule(minute = "*/15", hour = "*", persistent = false)
     public void resend() {
-        if (!startUp.isRegistered()) {
+        if (!startUp.isEnabled()) {
             return;
         }
         try {

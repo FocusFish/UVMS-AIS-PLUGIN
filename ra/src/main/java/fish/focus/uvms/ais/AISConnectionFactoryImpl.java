@@ -36,6 +36,7 @@ import javax.naming.NamingException;
 import javax.naming.Reference;
 import javax.resource.ResourceException;
 import javax.resource.spi.ConnectionManager;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 /**
@@ -122,5 +123,21 @@ public class AISConnectionFactoryImpl implements AISConnectionFactory {
         this.reference = reference;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        AISConnectionFactoryImpl that = (AISConnectionFactoryImpl) o;
+        return Objects.equals(reference, that.reference) && Objects.equals(mcf, that.mcf)
+                && Objects.equals(connectionManager, that.connectionManager);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(reference);
+        result = 31 * result + Objects.hashCode(mcf);
+        result = 31 * result + Objects.hashCode(connectionManager);
+        return result;
+    }
 }
