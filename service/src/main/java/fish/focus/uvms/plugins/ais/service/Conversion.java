@@ -42,7 +42,7 @@ public class Conversion {
     public static String getAnsi3ForCountryCode(String countryCode) {
         CountryCode cc = countryCodeMap.get(countryCode);
         if (cc == null) {
-            LOG.warn("Unknown country code: {}", countryCode);
+            LOG.debug("Unknown country code: {}", countryCode);
             return "ERR";
         }
         return cc.getAnsi3();
