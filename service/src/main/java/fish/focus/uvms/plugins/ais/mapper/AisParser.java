@@ -244,15 +244,30 @@ public class AisParser {
 
     }
 
-    private static String getAnsi3FromMMSI(String mmsi) {
-        String ansi3 = "ERR";
-        if (mmsi != null && mmsi.length() >= 3) {
-            String cc = mmsi.substring(0, 3);
-            ansi3 = Conversion.getAnsi3ForCountryCode(cc);
-            if ("ERR".equals(ansi3)) {
-                LOG.info("Vessel with mmsi={} has unknown country code={}", mmsi, cc);
-            }
+    static String getAnsi3FromMMSI(String mmsi) {
+        if (mmsi == null || mmsi.length() < 3) {
+            LOG.warn("Vessel with mmsi={} has unknown country code", mmsi);
+            return "ERR";
         }
+
+        String cc = mmsi.substring(0, 3);
+        String mid;
+        if (("970".equals(cc) || "111".equals(cc)) && mmsi.length() >= 6) {
+            mid = mmsi.substring(3, 6);
+        } else if (("00".equals(cc.substring(0, 2)) || "98".equals(cc.substring(0, 2)) || "99".equals(cc.substring(0, 2)))
+                && mmsi.length() >= 5) {
+            mid = mmsi.substring(2, 5);
+        } else if (("0".equals(cc.substring(0, 1)) || "8".equals(cc.substring(0, 1))) && mmsi.length() >= 4) {
+            mid = mmsi.substring(1, 4);
+        } else {
+            mid = cc;
+        }
+
+        String ansi3 = Conversion.getAnsi3ForCountryCode(mid);
+        if ("ERR".equals(ansi3)) {
+            LOG.warn("Vessel with mmsi={} has unknown country code={}", mmsi, mid);
+        }
+
         return ansi3;
     }
 

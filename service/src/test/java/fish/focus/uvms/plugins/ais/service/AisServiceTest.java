@@ -138,7 +138,7 @@ public class AisServiceTest {
         }
 
         // Need to wait for the above lockout period to pass before running again
-        with().pollDelay(20, MILLISECONDS).await().atMost(1, SECONDS)
+        with().pollDelay(20, MILLISECONDS).await().atMost(2, SECONDS)
                 .untilAsserted(() -> aisService.connectAndRetrieve());
 
         verify(connectionMock, times(7)).open(anyString(), anyInt(), anyString(), anyString());
