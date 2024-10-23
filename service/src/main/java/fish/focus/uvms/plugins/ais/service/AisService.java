@@ -14,8 +14,11 @@ package fish.focus.uvms.plugins.ais.service;
 import fish.focus.uvms.ais.AISConnection;
 import fish.focus.uvms.ais.AISConnectionFactory;
 import fish.focus.uvms.ais.Sentence;
+import fish.focus.uvms.asset.client.model.AssetDTO;
+import fish.focus.uvms.asset.client.model.search.SearchBranch;
 import fish.focus.uvms.inject.Managed;
 import fish.focus.uvms.plugins.ais.StartupBean;
+import fish.focus.uvms.asset.client.AssetClient;
 import org.eclipse.microprofile.metrics.MetricUnits;
 import org.eclipse.microprofile.metrics.annotation.Gauge;
 import org.slf4j.Logger;
@@ -58,6 +61,8 @@ public class AisService {
 
     private AISConnection connection;
 
+    private AssetClient assetClient;
+
     /**
      * Used for keeping track of reconnect attempts for the "socket stuck" problem
      */
@@ -78,7 +83,7 @@ public class AisService {
     @Inject
     public AisService(StartupBean startUp, ProcessService processService, DownsamplingService downsamplingService,
                       DownsamplingFishingService downsamplingFishingService, DownsamplingAssetService downsamplingAssetService,
-                      @Managed ManagedExecutorService executorService, @Managed AISConnectionFactory factory) {
+                      @Managed ManagedExecutorService executorService, @Managed AISConnectionFactory factory, AssetClient assetClient) {
         this.startUp = startUp;
         this.processService = processService;
         this.downsamplingService = downsamplingService;
@@ -86,6 +91,7 @@ public class AisService {
         this.downsamplingAssetService = downsamplingAssetService;
         this.executorService = executorService;
         this.factory = factory;
+        this.assetClient = assetClient;
     }
 
     @PostConstruct
@@ -122,6 +128,14 @@ public class AisService {
 
         LOG.info("Trying to connect to {}:{}", host, port);
         connection.open(host, port, username, password);
+    }
+
+    public void fetchAssetList () {
+        SearchBranch searchBranch = new SearchBranch(true);
+        List<AssetDTO> assetDTOList =  assetClient.getAssetList(searchBranch);
+        for (AssetDTO assetDTO: assetDTOList) {
+            knownFishingVessels.add(assetDTO.getMmsi());
+        }
     }
 
     @PreDestroy

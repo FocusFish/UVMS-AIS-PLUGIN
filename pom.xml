@@ -19,6 +19,7 @@
     <properties>
         <exchange.model.version>5.3.32</exchange.model.version>
         <uvms.common.version>4.1.15</uvms.common.version>
+        <uvms.asset.version>6.8.35</uvms.asset.version>
     </properties>
 
     <dependencies>

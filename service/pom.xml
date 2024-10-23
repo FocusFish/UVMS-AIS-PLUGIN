@@ -46,6 +46,11 @@
             <artifactId>uvms-commons-cache</artifactId>
             <version>${uvms.common.version}</version>
         </dependency>
+        <dependency>
+            <groupId>fish.focus.uvms.asset</groupId>
+            <artifactId>asset-client</artifactId>
+            <version>${uvms.asset.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

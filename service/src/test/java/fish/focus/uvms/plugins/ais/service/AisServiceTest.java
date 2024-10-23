@@ -3,6 +3,7 @@ package fish.focus.uvms.plugins.ais.service;
 import fish.focus.uvms.ais.AISConnection;
 import fish.focus.uvms.ais.AISConnectionFactory;
 import fish.focus.uvms.ais.Sentence;
+import fish.focus.uvms.asset.client.AssetClient;
 import fish.focus.uvms.plugins.ais.StartupBean;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,6 +46,9 @@ public class AisServiceTest {
 
     @Mock
     AISConnectionFactory factory;
+
+    @Mock
+    AssetClient assetClient;
 
     @InjectMocks
     private AisService aisService;
