@@ -231,8 +231,7 @@ public class AisService {
         }
 
         Instant earliestNextAttempt = lastConnectionAttempt.plus(backOffTime, backOffUnit);
-        // is before or equal
-        boolean shouldTryReconnect = now.isAfter(earliestNextAttempt);
+        boolean shouldTryReconnect = !now.isBefore(earliestNextAttempt);
         LOG.info("{} connection attempts. Last attempt at {}. Earliest next attempt at {}. Now is {}. Reconnect now = {}",
                 numberOfReconnectAttempts, lastConnectionAttempt, earliestNextAttempt, now, shouldTryReconnect);
         return shouldTryReconnect;
