@@ -14,11 +14,11 @@ package fish.focus.uvms.plugins.ais.service;
 import fish.focus.uvms.ais.AISConnection;
 import fish.focus.uvms.ais.AISConnectionFactory;
 import fish.focus.uvms.ais.Sentence;
+import fish.focus.uvms.asset.client.AssetClient;
 import fish.focus.uvms.asset.client.model.AssetDTO;
 import fish.focus.uvms.asset.client.model.search.SearchBranch;
 import fish.focus.uvms.inject.Managed;
 import fish.focus.uvms.plugins.ais.StartupBean;
-import fish.focus.uvms.asset.client.AssetClient;
 import org.eclipse.microprofile.metrics.MetricUnits;
 import org.eclipse.microprofile.metrics.annotation.Gauge;
 import org.slf4j.Logger;
@@ -62,6 +62,8 @@ public class AisService {
     private AISConnection connection;
 
     private AssetClient assetClient;
+
+    private boolean isAssetListOK = false;
 
     /**
      * Used for keeping track of reconnect attempts for the "socket stuck" problem
@@ -130,11 +132,11 @@ public class AisService {
         connection.open(host, port, username, password);
     }
 
-    public void fetchAssetList () {
+    void fetchAssetList () {
         SearchBranch searchBranch = new SearchBranch(true);
         List<AssetDTO> assetDTOList =  assetClient.getAssetList(searchBranch);
         for (AssetDTO assetDTO: assetDTOList) {
-            knownFishingVessels.add(assetDTO.getMmsi());
+            getKnownFishingVessels().add(assetDTO.getMmsi());
         }
     }
 
@@ -165,7 +167,10 @@ public class AisService {
         if (isConnectionDown()) {
             return;
         }
-
+        if (!isAssetListOK()) {
+            fetchAssetList();
+            setAssetListOK(!getKnownFishingVessels().isEmpty());
+        }
         processes.removeIf(process -> process.isDone() || process.isCancelled());
 
         List<Sentence> sentences = connection.getSentences();
@@ -252,5 +257,13 @@ public class AisService {
     @Gauge(unit = MetricUnits.NONE, name = "ais_knownfishingvessels_size", absolute = true)
     public int getKnownFishingVesselsSize() {
         return knownFishingVessels.size();
+    }
+
+    void setAssetListOK(boolean assetListOK) {
+        isAssetListOK = assetListOK;
+    }
+
+    boolean isAssetListOK(){
+        return isAssetListOK;
     }
 }

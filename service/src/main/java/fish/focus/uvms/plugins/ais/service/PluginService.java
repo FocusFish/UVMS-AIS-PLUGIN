@@ -105,7 +105,7 @@ public class PluginService {
     public AcknowledgeTypeType start() {
         LOG.info("{}.start()", startupBean.getRegisterClassName());
         try {
-            aisService.fetchAssetList();
+            aisService.setAssetListOK(false);
             startupBean.setEnabled(Boolean.TRUE);
             return AcknowledgeTypeType.OK;
         } catch (Exception e) {
