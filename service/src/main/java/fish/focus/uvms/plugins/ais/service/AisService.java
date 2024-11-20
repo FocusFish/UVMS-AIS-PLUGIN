@@ -140,8 +140,9 @@ public class AisService {
     void fetchAssetList () {
         SearchBranch searchBranch = new SearchBranch(true);
         List<AssetDTO> assetDTOList =  assetClient.getAssetList(searchBranch);
+        knownFishingVessels.clear();
         for (AssetDTO assetDTO: assetDTOList) {
-            getKnownFishingVessels().add(assetDTO.getMmsi());
+            knownFishingVessels.add(assetDTO.getMmsi());
         }
     }
 
