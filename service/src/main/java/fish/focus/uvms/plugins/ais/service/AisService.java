@@ -71,6 +71,11 @@ public class AisService {
     private int numberOfReconnectAttempts = 0;
 
     /**
+    * Used to keep track of retrieval attempts for the asset list
+    */
+    private int numberOfFetchAssetListAttempts = 0;
+
+    /**
      * Used when the socket has gotten "stuck".
      */
     Instant lastConnectionAttempt;
@@ -167,10 +172,15 @@ public class AisService {
         if (isConnectionDown()) {
             return;
         }
-        if (!isAssetListOK()) {
-            fetchAssetList();
-            setAssetListOK(!getKnownFishingVessels().isEmpty());
+
+        if (!isAssetListOK) {
+            tryToFetchAssetList();
         }
+        if (!isAssetListOK && numberOfFetchAssetListAttempts <= 20) {
+            // Retry retrieving the asset list in 15 seconds. Up to 20 attempts
+            return;
+        }
+
         processes.removeIf(process -> process.isDone() || process.isCancelled());
 
         List<Sentence> sentences = connection.getSentences();
@@ -194,6 +204,18 @@ public class AisService {
             // no new data was sent. This might indicate the "socket stuck" problem
             LOG.warn("No new data received. Reconnecting socket.");
             reconnect();
+        }
+    }
+
+    private void tryToFetchAssetList() {
+        numberOfFetchAssetListAttempts++;
+        try {
+            fetchAssetList();
+            setAssetListOK(true);
+            setNumberOfFetchAssetListAttempts(0);
+            LOG.info("Got {} knownFishingVessels", knownFishingVessels.size());
+        } catch (RuntimeException e) {
+            LOG.error("Error during fetch Asset list, {}th attempt out of 20: {}. ", numberOfFetchAssetListAttempts, e.getMessage());
         }
     }
 
@@ -263,7 +285,7 @@ public class AisService {
         isAssetListOK = assetListOK;
     }
 
-    boolean isAssetListOK(){
-        return isAssetListOK;
+    public void setNumberOfFetchAssetListAttempts(int numberOfFetchAssetListAttempts) {
+        this.numberOfFetchAssetListAttempts = numberOfFetchAssetListAttempts;
     }
 }

@@ -106,6 +106,7 @@ public class PluginService {
         LOG.info("{}.start()", startupBean.getRegisterClassName());
         try {
             aisService.setAssetListOK(false);
+            aisService.setNumberOfFetchAssetListAttempts(0);
             startupBean.setEnabled(Boolean.TRUE);
             return AcknowledgeTypeType.OK;
         } catch (Exception e) {
