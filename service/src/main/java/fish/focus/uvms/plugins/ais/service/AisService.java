@@ -285,7 +285,7 @@ public class AisService {
         isAssetListOK = assetListOK;
     }
 
-    public void setNumberOfFetchAssetListAttempts(int numberOfFetchAssetListAttempts) {
+    void setNumberOfFetchAssetListAttempts(int numberOfFetchAssetListAttempts) {
         this.numberOfFetchAssetListAttempts = numberOfFetchAssetListAttempts;
     }
 }
