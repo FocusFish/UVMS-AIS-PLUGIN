@@ -3,23 +3,30 @@ package fish.focus.uvms.plugins.ais.service;
 import fish.focus.uvms.ais.AISConnection;
 import fish.focus.uvms.ais.AISConnectionFactory;
 import fish.focus.uvms.ais.Sentence;
+import fish.focus.uvms.asset.client.AssetClient;
+import fish.focus.uvms.asset.client.model.AssetDTO;
+import fish.focus.uvms.asset.client.model.search.SearchBranch;
 import fish.focus.uvms.plugins.ais.StartupBean;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.resource.ResourceException;
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.with;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
+
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.StrictStubs.class)
@@ -45,6 +52,9 @@ public class AisServiceTest {
 
     @Mock
     AISConnectionFactory factory;
+
+    @Mock
+    AssetClient assetClient;
 
     @InjectMocks
     private AisService aisService;
@@ -177,4 +187,18 @@ public class AisServiceTest {
         verify(connectionMock, times(0)).getSentences();
         verify(connectionMock).close();
     }
+
+    @Test
+    public void fetchAssetListTest() {
+        AssetDTO assetDTO = new AssetDTO();
+        assetDTO.setMmsi("123456");
+        List<AssetDTO> assetDTOList = new ArrayList<>();
+        assetDTOList.add(assetDTO);
+        when(assetClient.getAssetList(any(SearchBranch.class))).thenReturn(assetDTOList);
+
+        aisService.fetchAssetList();
+        assertThat(aisService.getKnownFishingVessels(), hasSize(1));
+        assertThat(aisService.getKnownFishingVessels(), hasItem("123456"));
+    }
+
 }

@@ -14,6 +14,9 @@ package fish.focus.uvms.plugins.ais.service;
 import fish.focus.uvms.ais.AISConnection;
 import fish.focus.uvms.ais.AISConnectionFactory;
 import fish.focus.uvms.ais.Sentence;
+import fish.focus.uvms.asset.client.AssetClient;
+import fish.focus.uvms.asset.client.model.AssetDTO;
+import fish.focus.uvms.asset.client.model.search.SearchBranch;
 import fish.focus.uvms.inject.Managed;
 import fish.focus.uvms.plugins.ais.StartupBean;
 import org.eclipse.microprofile.metrics.MetricUnits;
@@ -58,10 +61,19 @@ public class AisService {
 
     private AISConnection connection;
 
+    private AssetClient assetClient;
+
+    private boolean isAssetListOK = false;
+
     /**
      * Used for keeping track of reconnect attempts for the "socket stuck" problem
      */
     private int numberOfReconnectAttempts = 0;
+
+    /**
+    * Used to keep track of retrieval attempts for the asset list
+    */
+    private int numberOfFetchAssetListAttempts = 0;
 
     /**
      * Used when the socket has gotten "stuck".
@@ -78,7 +90,7 @@ public class AisService {
     @Inject
     public AisService(StartupBean startUp, ProcessService processService, DownsamplingService downsamplingService,
                       DownsamplingFishingService downsamplingFishingService, DownsamplingAssetService downsamplingAssetService,
-                      @Managed ManagedExecutorService executorService, @Managed AISConnectionFactory factory) {
+                      @Managed ManagedExecutorService executorService, @Managed AISConnectionFactory factory, AssetClient assetClient) {
         this.startUp = startUp;
         this.processService = processService;
         this.downsamplingService = downsamplingService;
@@ -86,6 +98,7 @@ public class AisService {
         this.downsamplingAssetService = downsamplingAssetService;
         this.executorService = executorService;
         this.factory = factory;
+        this.assetClient = assetClient;
     }
 
     @PostConstruct
@@ -124,6 +137,15 @@ public class AisService {
         connection.open(host, port, username, password);
     }
 
+    void fetchAssetList () {
+        SearchBranch searchBranch = new SearchBranch(true);
+        List<AssetDTO> assetDTOList =  assetClient.getAssetList(searchBranch);
+        knownFishingVessels.clear();
+        for (AssetDTO assetDTO: assetDTOList) {
+            knownFishingVessels.add(assetDTO.getMmsi());
+        }
+    }
+
     @PreDestroy
     public void destroy() {
         LOG.debug("Shutting down AisService");
@@ -152,6 +174,14 @@ public class AisService {
             return;
         }
 
+        if (!isAssetListOK) {
+            tryToFetchAssetList();
+        }
+        if (!isAssetListOK && numberOfFetchAssetListAttempts <= 20) {
+            // Retry retrieving the asset list in 15 seconds. Up to 20 attempts
+            return;
+        }
+
         processes.removeIf(process -> process.isDone() || process.isCancelled());
 
         List<Sentence> sentences = connection.getSentences();
@@ -175,6 +205,18 @@ public class AisService {
             // no new data was sent. This might indicate the "socket stuck" problem
             LOG.warn("No new data received. Reconnecting socket.");
             reconnect();
+        }
+    }
+
+    private void tryToFetchAssetList() {
+        numberOfFetchAssetListAttempts++;
+        try {
+            fetchAssetList();
+            setAssetListOK(true);
+            setNumberOfFetchAssetListAttempts(0);
+            LOG.info("Got {} knownFishingVessels", knownFishingVessels.size());
+        } catch (RuntimeException e) {
+            LOG.error("Error during fetch Asset list, {}th attempt out of 20: {}. ", numberOfFetchAssetListAttempts, e.getMessage());
         }
     }
 
@@ -238,5 +280,13 @@ public class AisService {
     @Gauge(unit = MetricUnits.NONE, name = "ais_knownfishingvessels_size", absolute = true)
     public int getKnownFishingVesselsSize() {
         return knownFishingVessels.size();
+    }
+
+    void setAssetListOK(boolean assetListOK) {
+        isAssetListOK = assetListOK;
+    }
+
+    void setNumberOfFetchAssetListAttempts(int numberOfFetchAssetListAttempts) {
+        this.numberOfFetchAssetListAttempts = numberOfFetchAssetListAttempts;
     }
 }
