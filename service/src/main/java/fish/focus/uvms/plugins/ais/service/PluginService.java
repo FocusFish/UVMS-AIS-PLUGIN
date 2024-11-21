@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import javax.ejb.EJB;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
+import javax.inject.Inject;
 
 /**
  *
@@ -35,6 +36,9 @@ public class PluginService {
     private static final Logger LOG = LoggerFactory.getLogger(PluginService.class);
     @EJB
     StartupBean startupBean;
+
+    @Inject
+    AisService aisService;
 
     /**
      * @param report
@@ -101,6 +105,8 @@ public class PluginService {
     public AcknowledgeTypeType start() {
         LOG.info("{}.start()", startupBean.getRegisterClassName());
         try {
+            aisService.setAssetListOK(false);
+            aisService.setNumberOfFetchAssetListAttempts(0);
             startupBean.setEnabled(Boolean.TRUE);
             return AcknowledgeTypeType.OK;
         } catch (Exception e) {

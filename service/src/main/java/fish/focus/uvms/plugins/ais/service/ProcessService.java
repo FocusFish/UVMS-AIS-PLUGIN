@@ -79,7 +79,7 @@ public class ProcessService {
     }
 
     private void addFishingVessels(AssetDTO asset, Set<String> knownFishingVessels) {
-        if ((asset.getVesselType() != null && asset.getVesselType().equals("Fishing")) || Boolean.TRUE.equals(asset.getActive())) {
+        if ((asset.getVesselType() != null && asset.getVesselType().equals("Fishing"))) {
             knownFishingVessels.add(asset.getMmsi()); // knownFishingVessels is also changed by EventStreamListener
         }
     }

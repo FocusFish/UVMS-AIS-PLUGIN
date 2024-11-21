@@ -6,7 +6,7 @@
     <parent>
         <groupId>fish.focus.uvms.plugins.ais</groupId>
         <artifactId>ais</artifactId>
-        <version>3.1.35</version>
+        <version>3.1.36</version>
     </parent>
 
     <artifactId>ais-service</artifactId>
@@ -45,6 +45,11 @@
             <groupId>fish.focus.uvms.commons</groupId>
             <artifactId>uvms-commons-cache</artifactId>
             <version>${uvms.common.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>fish.focus.uvms.asset</groupId>
+            <artifactId>asset-client</artifactId>
+            <version>${uvms.asset.version}</version>
         </dependency>
     </dependencies>
 
