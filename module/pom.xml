@@ -10,7 +10,7 @@
     <parent>
         <groupId>fish.focus.uvms.plugins.ais</groupId>
         <artifactId>ais</artifactId>
-        <version>3.1.36</version>
+        <version>3.1.37</version>
     </parent>
 
     <build>
@@ -26,6 +26,16 @@
                             <groupId>${project.groupId}</groupId>
                             <artifactId>ais-service</artifactId>
                         </ejbModule>
+                        <jarModule>
+                            <groupId>fish.focus.uvms.asset</groupId>
+                            <artifactId>asset-client</artifactId>
+                            <includeInApplicationXml>true</includeInApplicationXml>
+                        </jarModule>
+                        <jarModule>
+                            <groupId>fish.focus.uvms.lib</groupId>
+                            <artifactId>usm4uvms</artifactId>
+                            <includeInApplicationXml>true</includeInApplicationXml>
+                        </jarModule>
                         <rarModule>
                             <groupId>${project.groupId}</groupId>
                             <artifactId>ais-ra-rar</artifactId>
@@ -54,6 +64,16 @@
             <artifactId>ais-ra-rar</artifactId>
             <version>${project.version}</version>
             <type>rar</type>
+        </dependency>
+        <dependency>
+            <groupId>fish.focus.uvms.asset</groupId>
+            <artifactId>asset-client</artifactId>
+            <version>${uvms.asset.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>fish.focus.uvms.lib</groupId>
+            <artifactId>usm4uvms</artifactId>
+            <version>${uvms.usm4uvms.version}</version>
         </dependency>
     </dependencies>
 
