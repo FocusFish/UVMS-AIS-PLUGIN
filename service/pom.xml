@@ -50,6 +50,12 @@
             <groupId>fish.focus.uvms.asset</groupId>
             <artifactId>asset-client</artifactId>
             <version>${uvms.asset.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>fish.focus.uvms.commons</groupId>
+            <artifactId>uvms-commons-message</artifactId>
+            <version>4.1.15</version>
         </dependency>
     </dependencies>
 
