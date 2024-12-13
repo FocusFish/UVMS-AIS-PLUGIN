@@ -282,11 +282,11 @@ public class AisService {
         return knownFishingVessels.size();
     }
 
-    void setAssetListOK(boolean assetListOK) {
+    public void setAssetListOK(boolean assetListOK) {
         isAssetListOK = assetListOK;
     }
 
-    void setNumberOfFetchAssetListAttempts(int numberOfFetchAssetListAttempts) {
+    public void setNumberOfFetchAssetListAttempts(int numberOfFetchAssetListAttempts) {
         this.numberOfFetchAssetListAttempts = numberOfFetchAssetListAttempts;
     }
 }

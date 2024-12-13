@@ -111,7 +111,7 @@ public class PluginService {
             return AcknowledgeTypeType.OK;
         } catch (Exception e) {
             startupBean.setEnabled(Boolean.FALSE);
-            LOG.error("Failed to start {}", startupBean.getRegisterClassName());
+            LOG.error("Failed to start {}", startupBean.getRegisterClassName(), e);
             return AcknowledgeTypeType.NOK;
         }
 
