@@ -1,4 +1,4 @@
-package fish.focus.uvms.consumer;
+package fish.focus.uvms.plugins.ais.consumer;
 
 import fish.focus.uvms.asset.client.model.AssetDTO;
 import fish.focus.uvms.commons.date.JsonBConfigurator;
@@ -18,6 +18,7 @@ import java.util.Set;
 public class EventStreamListener implements MessageListener {
     private static final Logger LOG = LoggerFactory.getLogger(EventStreamListener.class);
     Jsonb jsonb;
+
     @Inject
     private AisService aisService;
 
