@@ -1,4 +1,4 @@
-package fish.focus.uvms.inject;
+package fish.focus.uvms.plugins.ais.inject;
 
 import javax.annotation.Resource;
 import javax.enterprise.concurrent.ManagedExecutorService;

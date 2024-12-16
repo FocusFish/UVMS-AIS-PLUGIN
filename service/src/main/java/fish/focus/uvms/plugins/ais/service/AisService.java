@@ -17,7 +17,7 @@ import fish.focus.uvms.ais.Sentence;
 import fish.focus.uvms.asset.client.AssetClient;
 import fish.focus.uvms.asset.client.model.AssetDTO;
 import fish.focus.uvms.asset.client.model.search.SearchBranch;
-import fish.focus.uvms.inject.Managed;
+import fish.focus.uvms.plugins.ais.inject.Managed;
 import fish.focus.uvms.plugins.ais.StartupBean;
 import org.eclipse.microprofile.metrics.MetricUnits;
 import org.eclipse.microprofile.metrics.annotation.Gauge;

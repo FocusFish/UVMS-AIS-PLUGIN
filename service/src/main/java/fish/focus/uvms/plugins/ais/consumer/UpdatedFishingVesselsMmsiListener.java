@@ -1,4 +1,4 @@
-package fish.focus.uvms.consumer;
+package fish.focus.uvms.plugins.ais.consumer;
 
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;

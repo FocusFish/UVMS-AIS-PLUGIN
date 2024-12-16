@@ -1,4 +1,4 @@
-package fish.focus.uvms.consumer;
+package fish.focus.uvms.plugins.ais.consumer;
 
 import fish.focus.uvms.asset.client.model.AssetDTO;
 import fish.focus.uvms.plugins.ais.service.AisService;

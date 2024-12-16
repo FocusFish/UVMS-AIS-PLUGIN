@@ -1,4 +1,4 @@
-package fish.focus.uvms.inject;
+package fish.focus.uvms.plugins.ais.inject;
 
 import fish.focus.uvms.ais.AISConnectionFactory;
 
