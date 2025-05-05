@@ -19,7 +19,7 @@
     <properties>
         <exchange.model.version>5.3.32</exchange.model.version>
         <uvms.common.version>4.1.15</uvms.common.version>
-        <uvms.asset.version>6.8.35</uvms.asset.version>
+        <uvms.asset.version>6.8.37</uvms.asset.version>
         <uvms.usm4uvms.version>4.1.12</uvms.usm4uvms.version>
     </properties>
 
