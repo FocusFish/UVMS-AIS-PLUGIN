@@ -12,7 +12,8 @@
 
     <groupId>fish.focus.uvms.plugins.ais</groupId>
     <artifactId>ais</artifactId>
-    <version>3.1.40</version>
+    <name>ais</name>
+    <version>3.1.41</version>
     <packaging>pom</packaging>
     <description>UVMS AIS plugin.</description>
 
