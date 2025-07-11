@@ -10,6 +10,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>ais-ra-rar</artifactId>
+    <name>${project.parent.artifactId}-ra-rar</name>
     <packaging>rar</packaging>
 
     <dependencies>
