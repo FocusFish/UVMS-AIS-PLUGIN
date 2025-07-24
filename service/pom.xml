@@ -55,7 +55,7 @@
         <dependency>
             <groupId>fish.focus.uvms.commons</groupId>
             <artifactId>uvms-commons-message</artifactId>
-            <version>4.1.15</version>
+            <version>4.2.0</version>
         </dependency>
     </dependencies>
 
