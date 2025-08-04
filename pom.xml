@@ -20,7 +20,7 @@
     <properties>
         <exchange.model.version>5.4.0</exchange.model.version>
         <uvms.common.version>4.2.0</uvms.common.version>
-        <uvms.asset.version>6.10.0</uvms.asset.version>
+        <uvms.asset.version>6.10.1</uvms.asset.version>
         <uvms.usm4uvms.version>4.2.0</uvms.usm4uvms.version>
     </properties>
 
